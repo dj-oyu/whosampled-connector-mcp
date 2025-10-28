@@ -261,6 +261,13 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ### Installation for Development
 
+**With uv (Recommended):**
+```bash
+# Sync dependencies (includes dev dependencies by default)
+uv sync
+```
+
+**With pip:**
 ```bash
 # Install in editable mode with dev dependencies
 pip install -e ".[dev]"
@@ -268,6 +275,28 @@ pip install -e ".[dev]"
 
 ### Running Tests
 
+**With uv:**
+```bash
+# Run all tests
+uv run pytest
+
+# Run tests with verbose output
+uv run pytest -v
+
+# Run tests with coverage
+uv run pytest --cov=whosampled_connector --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_server.py
+
+# Run specific test
+uv run pytest tests/test_server.py::test_list_tools
+
+# Run only working tests (skip scraper/e2e tests that need Playwright mocks)
+uv run pytest tests/test_server.py -v
+```
+
+**With pip:**
 ```bash
 # Run all tests
 pytest
@@ -279,14 +308,13 @@ pytest -v
 pytest --cov=whosampled_connector --cov-report=html
 
 # Run specific test file
-pytest tests/test_scraper.py
+pytest tests/test_server.py
 
 # Run specific test
-pytest tests/test_scraper.py::test_search_track_success
-
-# Run tests in parallel (requires pytest-xdist)
-pytest -n auto
+pytest tests/test_server.py::test_list_tools
 ```
+
+**Note:** After the Playwright migration, only `tests/test_server.py` (12 tests) currently passes. The scraper and e2e tests need to be updated to mock Playwright instead of httpx.
 
 ### Test Structure
 
