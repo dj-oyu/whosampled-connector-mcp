@@ -169,13 +169,41 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ## Development
 
-```bash
-# Run tests
-pytest
+### Installation for Development
 
-# Install in editable mode
+```bash
+# Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 ```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with verbose output
+pytest -v
+
+# Run tests with coverage
+pytest --cov=whosampled_connector --cov-report=html
+
+# Run specific test file
+pytest tests/test_scraper.py
+
+# Run specific test
+pytest tests/test_scraper.py::test_search_track_success
+
+# Run tests in parallel (requires pytest-xdist)
+pytest -n auto
+```
+
+### Test Structure
+
+- `tests/test_scraper.py` - Unit tests for the WhoSampled scraper
+- `tests/test_server.py` - Integration tests for MCP server tools
+- `tests/test_e2e.py` - End-to-end workflow tests
+- `tests/conftest.py` - Shared test fixtures and configuration
 
 ## License
 
