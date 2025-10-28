@@ -132,16 +132,23 @@ class WhoSampledScraper:
             soup = BeautifulSoup(html, 'lxml')
 
             # Find the first track result
-            track_result = soup.select_one('li.trackName a')
+            # Try both trackTitle and trackName classes
+            track_result = soup.select_one('a.trackTitle') or soup.select_one('a.trackName')
             if not track_result:
                 return None
 
             track_url = self.BASE_URL + track_result.get('href', '')
             track_title = track_result.get_text(strip=True)
 
-            # Extract artist name if available
-            artist_elem = soup.select_one('li.trackName .trackArtist')
-            artist_name = artist_elem.get_text(strip=True) if artist_elem else artist
+            # Extract artist name - look for the next sibling link or parent's next link
+            artist_name = artist
+            parent = track_result.parent
+            if parent:
+                # Find all links in the parent container
+                links = parent.find_all('a')
+                # The artist is usually the second link
+                if len(links) > 1:
+                    artist_name = links[1].get_text(strip=True)
 
             return {
                 "title": track_title,
