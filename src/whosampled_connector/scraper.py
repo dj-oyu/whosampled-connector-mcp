@@ -37,7 +37,7 @@ class WhoSampledScraper:
         params = {"q": query}
         
         try:
-            response = self.client.get(self.SEARCH_URL, params=params)
+            response = await self.client.get(self.SEARCH_URL, params=params)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.text, 'lxml')
@@ -76,7 +76,7 @@ class WhoSampledScraper:
             Dictionary with track details including samples, covers, remixes
         """
         try:
-            response = self.client.get(track_url)
+            response = await self.client.get(track_url)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.text, 'lxml')

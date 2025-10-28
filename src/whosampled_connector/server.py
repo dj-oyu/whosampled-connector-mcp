@@ -234,9 +234,14 @@ def _format_track_details(details: dict) -> str:
             lines.append(f"    {remix['url']}")
         lines.append("")
     
-    if len(lines) <= 3:  # Only URL and title
+    # Check if we have any content beyond URL and title
+    has_content = (details.get("samples") or details.get("sampled_by") or
+                   details.get("covers") or details.get("covered_by") or
+                   details.get("remixes") or details.get("remixed_by"))
+
+    if not has_content:
         lines.append("No samples, covers, or remixes found for this track.")
-    
+
     return "\n".join(lines)
 
 
