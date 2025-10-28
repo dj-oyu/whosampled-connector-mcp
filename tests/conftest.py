@@ -1,7 +1,7 @@
 """Pytest configuration and fixtures."""
 import pytest
 import pytest_asyncio
-import httpx
+from unittest.mock import AsyncMock, patch
 from whosampled_connector.scraper import WhoSampledScraper
 
 
@@ -15,18 +15,16 @@ async def scraper():
 
 @pytest.fixture
 def mock_search_html():
-    """Mock HTML response for search results."""
+    """Mock HTML response for search results with actual WhoSampled structure."""
     return """
     <html>
         <body>
-            <ul>
-                <li class="trackName">
-                    <a href="/Daft-Punk/Harder,-Better,-Faster,-Stronger/">
-                        Harder, Better, Faster, Stronger
-                    </a>
-                    <span class="trackArtist">Daft Punk</span>
-                </li>
-            </ul>
+            <div class="topResult">
+                <a class="trackTitle" href="/Daft-Punk/Harder,-Better,-Faster,-Stronger/">
+                    Harder, Better, Faster, Stronger
+                </a>
+                <a href="/Daft-Punk/">Daft Punk</a>
+            </div>
         </body>
     </html>
     """

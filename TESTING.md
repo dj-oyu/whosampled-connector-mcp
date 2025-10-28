@@ -2,31 +2,28 @@
 
 ## Automated Tests
 
-### Current Test Status (Post-Playwright Migration)
+### Current Test Status
 
-Since the scraper now uses Playwright headless browser instead of HTTP requests:
+✅ **All Tests Passing** (28/28 tests):
+- `tests/test_server.py` - 12 tests covering MCP server tools
+- `tests/test_scraper.py` - 8 tests covering scraper functionality
+- `tests/test_e2e.py` - 8 tests covering end-to-end workflows
 
-✅ **Working Tests** (12 tests):
-- `tests/test_server.py` - All MCP server tool tests pass
-- These tests mock the scraper, so they work independently of the implementation
-
-❌ **Requires Update** (16 tests):
-- `tests/test_scraper.py` - Uses httpx_mock, incompatible with Playwright
-- `tests/test_e2e.py` - Uses httpx_mock, incompatible with Playwright
-
-These tests need to be rewritten to mock Playwright instead of httpx, or converted to integration tests.
+All tests have been updated to use Playwright mocking via `unittest.mock.patch` instead of `httpx_mock`.
 
 ### Running Tests
 
 ```bash
-# Run working tests only
-pytest tests/test_server.py -v
+# Run all tests
+uv run pytest -v
 
-# Run all tests (some will fail)
-pytest -v
+# Run specific test file
+uv run pytest tests/test_server.py -v
+uv run pytest tests/test_scraper.py -v
+uv run pytest tests/test_e2e.py -v
 
-# Skip failing tests
-pytest -v -k "not scraper and not e2e"
+# Run tests with coverage
+uv run pytest --cov=whosampled_connector -v
 ```
 
 ## Verifying Mock HTML Against Live Site
@@ -44,10 +41,13 @@ Since WhoSampled uses anti-bot protection, automated verification is not possibl
 
 3. Verify the following structure exists:
    ```html
-   <li class="trackName">
-     <a href="/Artist-Name/Track-Name/">Track Title</a>
-     <span class="trackArtist">Artist Name</span>
-   </li>
+   <!-- Top hit result -->
+   <a class="trackTitle" href="/Artist-Name/Track-Name/">Track Title</a>
+   <a href="/Artist-Name/">Artist Name</a>
+
+   <!-- Other track results -->
+   <a class="trackName" href="/Artist-Name/Track-Name/">Track Title</a>
+   <a href="/Artist-Name/">Artist Name</a>
    ```
 
 ### Step 2: Check Track Details Page
@@ -96,8 +96,9 @@ If the actual HTML structure differs from what's described above, update the moc
 Our scraper uses these CSS selectors:
 
 **Search Results:**
-- `li.trackName a` - track links
-- `.trackArtist` - artist names
+- `a.trackTitle` - top hit track link
+- `a.trackName` - other track links
+- Artist names extracted from parent container's second link
 
 **Track Details:**
 - `h1.trackName, h1` - track title
@@ -110,7 +111,7 @@ Our scraper uses these CSS selectors:
 ## Test Coverage
 
 - **test_scraper.py** - 8 tests covering scraper functionality
-- **test_server.py** - 11 tests covering MCP server tools
-- **test_e2e.py** - 9 tests covering end-to-end workflows
+- **test_server.py** - 12 tests covering MCP server tools
+- **test_e2e.py** - 8 tests covering end-to-end workflows
 
-Total: 28 tests
+Total: 28 tests (all passing ✅)
