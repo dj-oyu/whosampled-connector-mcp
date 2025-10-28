@@ -4,6 +4,15 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 アーティスト名、曲名などの文字列を受け取ってWhoSampled?で検索を実行し、その曲のサンプリングソースやカバー音源などを発見するためのMCPサーバーです。希望に応じてYouTubeのリンクも返します。
 
+## ⚠️ Important Notice
+
+**This project currently faces feasibility challenges due to WhoSampled's anti-bot protection.** Automated HTTP requests are blocked with 403 errors. See [FEASIBILITY.md](FEASIBILITY.md) for:
+- Detailed analysis of the issue
+- Recommended solutions (headless browser, API access, etc.)
+- Testing results and next steps
+
+**Status**: Requires implementation of anti-bot bypass solution before production use.
+
 ## Quick Start
 
 ```bash
