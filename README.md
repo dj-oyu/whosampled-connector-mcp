@@ -274,53 +274,73 @@ pip install -e ".[dev]"
 
 ### Running Tests
 
-**With uv:**
-```bash
-# Run all tests
-uv run pytest
+This project has two types of tests:
 
-# Run tests with verbose output
+**Unit Tests (Fast, Mocked)** - 20 tests:
+- Test server and scraper logic with mocked data
+- Do not access real WhoSampled
+- Run in ~0.1 seconds
+
+**Integration Tests (Slow, Real)** - 8 tests:
+- Access real WhoSampled website
+- Verify HTML structure and CSS selectors
+- Require Playwright browsers installed
+- Run in ~30-60 seconds
+
+**Quick Test (Unit Tests Only - Recommended):**
+```bash
+# With uv
+uv run pytest -v -m "not integration"
+
+# With pip
+pytest -v -m "not integration"
+
+# Result: 20 passed in ~0.1s
+```
+
+**Full Test Suite (Unit + Integration):**
+```bash
+# First, install Playwright browsers (one-time setup)
+uv run playwright install chromium
+
+# Run all tests
 uv run pytest -v
 
-# Run tests with coverage
-uv run pytest --cov=whosampled_connector --cov-report=html
-
-# Run specific test file
-uv run pytest tests/test_server.py
-
-# Run specific test
-uv run pytest tests/test_server.py::test_list_tools
-
-# Run only working tests (skip scraper/e2e tests that need Playwright mocks)
-uv run pytest tests/test_server.py -v
+# Result: 28 passed in ~30-60s
 ```
 
-**With pip:**
+**Integration Tests Only:**
 ```bash
-# Run all tests
-pytest
-
-# Run tests with verbose output
-pytest -v
-
-# Run tests with coverage
-pytest --cov=whosampled_connector --cov-report=html
-
-# Run specific test file
-pytest tests/test_server.py
-
-# Run specific test
-pytest tests/test_server.py::test_list_tools
+uv run pytest -v -m "integration"
 ```
 
-**Note:** After the Playwright migration, only `tests/test_server.py` (12 tests) currently passes. The scraper and e2e tests need to be updated to mock Playwright instead of httpx.
+**Specific Test Files:**
+```bash
+# Server tests (fast)
+uv run pytest tests/test_server.py -v
+
+# Scraper tests (fast, mocked)
+uv run pytest tests/test_scraper.py -v
+
+# Integration tests (slow, real WhoSampled access)
+uv run pytest tests/test_e2e.py -v
+```
+
+**With Coverage:**
+```bash
+uv run pytest --cov=whosampled_connector --cov-report=html -m "not integration"
+```
+
+See [TESTING.md](TESTING.md) for more details.
 
 ### Test Structure
 
-- `tests/test_scraper.py` - Unit tests for the WhoSampled scraper
-- `tests/test_server.py` - Integration tests for MCP server tools
-- `tests/test_e2e.py` - End-to-end workflow tests
+- `tests/test_scraper.py` - Unit tests for scraper (8 tests, mocked)
+- `tests/test_server.py` - Unit tests for MCP server tools (12 tests, mocked)
+- `tests/test_e2e.py` - Integration tests (8 tests, real WhoSampled access)
 - `tests/conftest.py` - Shared test fixtures and configuration
+
+**Total**: 28 tests (20 unit + 8 integration)
 
 ## License
 

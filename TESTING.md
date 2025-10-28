@@ -1,30 +1,71 @@
 # Testing Guide
 
-## Automated Tests
+## Test Architecture
 
-### Current Test Status
+This project has two types of tests:
 
-✅ **All Tests Passing** (28/28 tests):
-- `tests/test_server.py` - 12 tests covering MCP server tools
-- `tests/test_scraper.py` - 8 tests covering scraper functionality
-- `tests/test_e2e.py` - 8 tests covering end-to-end workflows
+### 1. Unit Tests (Fast, Mocked)
+- **test_server.py** - 12 tests covering MCP server tools
+- **test_scraper.py** - 8 tests covering scraper functionality
+- Use `unittest.mock.patch` to mock `_fetch_page` method
+- Do not access real WhoSampled website
+- Run quickly (~0.1s total)
+- ✅ **Always passing** (20/20 tests)
 
-All tests have been updated to use Playwright mocking via `unittest.mock.patch` instead of `httpx_mock`.
+### 2. Integration Tests (Slow, Real Access)
+- **test_e2e.py** - 8 tests covering end-to-end workflows
+- Actually access real WhoSampled website using Playwright
+- Verify HTML structure hasn't changed
+- Detect CSS selector issues
+- Run slowly (~30-60s total)
+- Require Playwright browsers installed
+- ✅ **Pass when Playwright browsers are available**
 
-### Running Tests
+## Running Tests
 
+### Quick Test (Unit Tests Only)
 ```bash
-# Run all tests
+# Run only unit tests (recommended for development)
+uv run pytest -v -m "not integration"
+
+# Result: 20 passed in ~0.1s
+```
+
+### Full Test Suite (Unit + Integration)
+```bash
+# First, install Playwright browsers (one-time setup)
+uv run playwright install chromium
+
+# Run all tests including integration tests
 uv run pytest -v
 
-# Run specific test file
+# Result: 28 passed in ~30-60s
+```
+
+### Integration Tests Only
+```bash
+# Run only integration tests
+uv run pytest -v -m "integration"
+
+# Skip slow integration tests
+uv run pytest -v -m "integration and not slow"
+```
+
+### Specific Test Files
+```bash
 uv run pytest tests/test_server.py -v
 uv run pytest tests/test_scraper.py -v
 uv run pytest tests/test_e2e.py -v
-
-# Run tests with coverage
-uv run pytest --cov=whosampled_connector -v
 ```
+
+## Integration Test Requirements
+
+Integration tests require:
+1. **Playwright browsers installed**: `uv run playwright install chromium`
+2. **Network access** to https://www.whosampled.com
+3. **Residential IP** (some cloud IPs may be blocked)
+
+If integration tests fail due to network restrictions, you can still verify the unit tests pass.
 
 ## Verifying Mock HTML Against Live Site
 
