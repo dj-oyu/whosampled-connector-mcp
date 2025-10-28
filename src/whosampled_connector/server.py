@@ -92,19 +92,20 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     if name == "search_track":
         artist = arguments.get("artist", "")
         track = arguments.get("track", "")
-        
-        if not artist or not track:
+
+        if not artist:
             return [TextContent(
                 type="text",
-                text="Error: Both artist and track name are required"
+                text="Error: Artist name is required"
             )]
-        
+
         result = await scraper.search_track(artist, track)
-        
+
         if result is None:
+            search_query = f"'{track}' by '{artist}'" if track else f"artist '{artist}'"
             return [TextContent(
                 type="text",
-                text=f"No results found for '{track}' by '{artist}'"
+                text=f"No results found for {search_query}"
             )]
         
         response = f"""Track found on WhoSampled:
@@ -234,9 +235,14 @@ def _format_track_details(details: dict) -> str:
             lines.append(f"    {remix['url']}")
         lines.append("")
     
-    if len(lines) <= 3:  # Only URL and title
+    # Check if we have any content beyond URL and title
+    has_content = (details.get("samples") or details.get("sampled_by") or
+                   details.get("covers") or details.get("covered_by") or
+                   details.get("remixes") or details.get("remixed_by"))
+
+    if not has_content:
         lines.append("No samples, covers, or remixes found for this track.")
-    
+
     return "\n".join(lines)
 
 

@@ -4,7 +4,34 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 アーティスト名、曲名などの文字列を受け取ってWhoSampled?で検索を実行し、その曲のサンプリングソースやカバー音源などを発見するためのMCPサーバーです。希望に応じてYouTubeのリンクも返します。
 
+## ✅ Anti-Bot Solution Implemented
+
+**This project now uses Playwright headless browser to bypass WhoSampled's anti-bot protection.** The scraper has been rewritten to use a real browser instead of HTTP requests.
+
+**Status**: Implementation complete. Ready for testing on local machines with residential IPs.
+
+⚠️ **Note**: Cloud/datacenter IPs may still be blocked. Test from your local development environment.
+
 ## Quick Start
+
+### Using uv (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/dj-oyu/whosampled-connector-.git
+cd whosampled-connector-
+
+# Sync dependencies (creates venv and installs all dependencies including dev tools)
+uv sync
+
+# Install Playwright browser
+uv run playwright install chromium
+
+# Run the MCP server
+uv run python -m whosampled_connector
+```
+
+### Using pip
 
 ```bash
 # Clone the repository
@@ -14,11 +41,11 @@ cd whosampled-connector-
 # Install the package
 pip install -e .
 
+# Install Playwright browser
+playwright install chromium
+
 # Run the MCP server
 python -m whosampled_connector
-
-# Or run the example usage
-python example_usage.py
 ```
 
 ## Features
@@ -34,14 +61,76 @@ python example_usage.py
 **Requirements:**
 - Python 3.10 or higher
 - Internet access (for fetching data from WhoSampled)
+- Playwright browser binaries
+
+### Option 1: Using uv (Recommended)
+
+```bash
+# Install uv if you haven't already
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync all dependencies (creates venv and installs dev dependencies automatically)
+uv sync
+
+# Install Playwright browser (Chromium)
+uv run playwright install chromium
+
+# Note: uv sync automatically installs both runtime and dev dependencies (pytest, etc.)
+```
+
+### Option 2: Using pip
 
 ```bash
 # Install dependencies
 pip install -e .
 
+# Install Playwright browser (Chromium)
+playwright install chromium
+
 # For development
 pip install -e ".[dev]"
 ```
+
+### Quick Test (Verify Installation)
+
+After installation, test the scraper directly:
+
+**With uv:**
+```bash
+uv run python -c "
+from whosampled_connector.scraper import WhoSampledScraper
+import asyncio
+
+async def test():
+    scraper = WhoSampledScraper()
+    result = await scraper.search_track('Daft Punk', 'One More Time')
+    print(result)
+    await scraper.aclose()
+
+asyncio.run(test())
+"
+```
+
+**With pip:**
+```bash
+python -c "
+from whosampled_connector.scraper import WhoSampledScraper
+import asyncio
+
+async def test():
+    scraper = WhoSampledScraper()
+    result = await scraper.search_track('Daft Punk', 'One More Time')
+    print(result)
+    await scraper.aclose()
+
+asyncio.run(test())
+"
+```
+
+If successful, you should see track information. If you get a 403 error, try:
+- Testing from a different network (residential, not datacenter/cloud)
+- Using a VPN
+- Checking if your IP is blocked
 
 ## Usage
 
@@ -169,13 +258,89 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ## Development
 
-```bash
-# Run tests
-pytest
+### Installation for Development
 
-# Install in editable mode
+**With uv (Recommended):**
+```bash
+# Sync dependencies (includes dev dependencies by default)
+uv sync
+```
+
+**With pip:**
+```bash
+# Install in editable mode with dev dependencies
 pip install -e ".[dev]"
 ```
+
+### Running Tests
+
+This project has two types of tests:
+
+**Unit Tests (Fast, Mocked)** - 20 tests:
+- Test server and scraper logic with mocked data
+- Do not access real WhoSampled
+- Run in ~0.1 seconds
+
+**Integration Tests (Slow, Real)** - 8 tests:
+- Access real WhoSampled website
+- Verify HTML structure and CSS selectors
+- Require Playwright browsers installed
+- Run in ~30-60 seconds
+
+**Quick Test (Unit Tests Only - Recommended):**
+```bash
+# With uv
+uv run pytest -v -m "not integration"
+
+# With pip
+pytest -v -m "not integration"
+
+# Result: 20 passed in ~0.1s
+```
+
+**Full Test Suite (Unit + Integration):**
+```bash
+# First, install Playwright browsers (one-time setup)
+uv run playwright install chromium
+
+# Run all tests
+uv run pytest -v
+
+# Result: 28 passed in ~30-60s
+```
+
+**Integration Tests Only:**
+```bash
+uv run pytest -v -m "integration"
+```
+
+**Specific Test Files:**
+```bash
+# Server tests (fast)
+uv run pytest tests/test_server.py -v
+
+# Scraper tests (fast, mocked)
+uv run pytest tests/test_scraper.py -v
+
+# Integration tests (slow, real WhoSampled access)
+uv run pytest tests/test_e2e.py -v
+```
+
+**With Coverage:**
+```bash
+uv run pytest --cov=whosampled_connector --cov-report=html -m "not integration"
+```
+
+See [TESTING.md](TESTING.md) for more details.
+
+### Test Structure
+
+- `tests/test_scraper.py` - Unit tests for scraper (8 tests, mocked)
+- `tests/test_server.py` - Unit tests for MCP server tools (12 tests, mocked)
+- `tests/test_e2e.py` - Integration tests (8 tests, real WhoSampled access)
+- `tests/conftest.py` - Shared test fixtures and configuration
+
+**Total**: 28 tests (20 unit + 8 integration)
 
 ## License
 
