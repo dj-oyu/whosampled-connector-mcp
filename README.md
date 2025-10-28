@@ -14,6 +14,23 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 ## Quick Start
 
+### Using uv (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/dj-oyu/whosampled-connector-.git
+cd whosampled-connector-
+
+# Sync dependencies (creates venv and installs everything)
+uv sync
+
+# Install Playwright browser
+uv run playwright install chromium
+
+# Run the MCP server
+uv run python -m whosampled_connector
+```
+
 ### Using pip
 
 ```bash
@@ -23,29 +40,6 @@ cd whosampled-connector-
 
 # Install the package
 pip install -e .
-
-# Install Playwright browser
-playwright install chromium
-
-# Run the MCP server
-python -m whosampled_connector
-
-# Or run the example usage
-python example_usage.py
-```
-
-### Using uv (Faster)
-
-```bash
-# Clone the repository
-git clone https://github.com/dj-oyu/whosampled-connector-.git
-cd whosampled-connector-
-
-# Create and activate virtual environment
-uv venv && source .venv/bin/activate
-
-# Install the package
-uv pip install -e .
 
 # Install Playwright browser
 playwright install chromium
@@ -69,7 +63,23 @@ python -m whosampled_connector
 - Internet access (for fetching data from WhoSampled)
 - Playwright browser binaries
 
-### Option 1: Using pip
+### Option 1: Using uv (Recommended)
+
+```bash
+# Install uv if you haven't already
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync all dependencies (creates venv automatically)
+uv sync
+
+# Install Playwright browser (Chromium)
+uv run playwright install chromium
+
+# For development (includes test dependencies)
+# Dependencies are already installed by uv sync
+```
+
+### Option 2: Using pip
 
 ```bash
 # Install dependencies
@@ -82,35 +92,28 @@ playwright install chromium
 pip install -e ".[dev]"
 ```
 
-### Option 2: Using uv (Recommended for faster installation)
-
-```bash
-# Install uv if you haven't already
-# curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment
-uv venv
-
-# Activate virtual environment
-source .venv/bin/activate  # On Unix/macOS
-# .venv\Scripts\activate   # On Windows
-
-# Install dependencies
-uv pip install -e .
-
-# Install Playwright browser (Chromium)
-playwright install chromium
-
-# For development
-uv pip install -e ".[dev]"
-```
-
 ### Quick Test (Verify Installation)
 
 After installation, test the scraper directly:
 
+**With uv:**
 ```bash
-# Test with a simple search
+uv run python -c "
+from whosampled_connector.scraper import WhoSampledScraper
+import asyncio
+
+async def test():
+    scraper = WhoSampledScraper()
+    result = await scraper.search_track('Daft Punk', 'One More Time')
+    print(result)
+    await scraper.aclose()
+
+asyncio.run(test())
+"
+```
+
+**With pip:**
+```bash
 python -c "
 from whosampled_connector.scraper import WhoSampledScraper
 import asyncio
