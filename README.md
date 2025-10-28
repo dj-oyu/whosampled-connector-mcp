@@ -21,7 +21,7 @@ WhoSampledで検索して結果を返すMCPサーバー
 git clone https://github.com/dj-oyu/whosampled-connector-.git
 cd whosampled-connector-
 
-# Sync dependencies (creates venv and installs everything)
+# Sync dependencies (creates venv and installs all dependencies including dev tools)
 uv sync
 
 # Install Playwright browser
@@ -69,14 +69,13 @@ python -m whosampled_connector
 # Install uv if you haven't already
 # curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Sync all dependencies (creates venv automatically)
+# Sync all dependencies (creates venv and installs dev dependencies automatically)
 uv sync
 
 # Install Playwright browser (Chromium)
 uv run playwright install chromium
 
-# For development (includes test dependencies)
-# Dependencies are already installed by uv sync
+# Note: uv sync automatically installs both runtime and dev dependencies (pytest, etc.)
 ```
 
 ### Option 2: Using pip
