@@ -179,6 +179,28 @@ python -m whosampled_connector
 
 The server will start and listen for MCP protocol messages on stdin/stdout.
 
+### Using with Claude Desktop App
+
+To use this MCP server with Claude Desktop app, see the [Claude Desktop Configuration Guide](CLAUDE_DESKTOP_CONFIG.md) for detailed setup instructions.
+
+**Quick Configuration (Windows example):**
+```json
+{
+  "mcpServers": {
+    "whosampled-mcp": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/dj-oyu/whosampled-connector-mcp",
+        "whosampled-connector"
+      ]
+    }
+  }
+}
+```
+
+See the full guide for macOS/Linux configurations and troubleshooting.
+
 ### Example Usage
 
 See `example_usage.py` for sample client interactions. Run it with:
