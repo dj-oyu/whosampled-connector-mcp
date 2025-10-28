@@ -14,12 +14,24 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 ## Quick Start
 
-### Using uv (Recommended)
+### Using uvx (Easiest - No Installation Required)
+
+```bash
+# First, install Playwright browsers (one-time setup)
+uvx playwright install chromium
+
+# Then run the MCP server directly from GitHub
+uvx --from git+https://github.com/dj-oyu/whosampled-connector-mcp whosampled-connector
+```
+
+**Note**: The Playwright browser installation is separate from the package and only needs to be done once.
+
+### Using uv (Recommended for Development)
 
 ```bash
 # Clone the repository
-git clone https://github.com/dj-oyu/whosampled-connector-.git
-cd whosampled-connector-
+git clone https://github.com/dj-oyu/whosampled-connector-mcp.git
+cd whosampled-connector-mcp
 
 # Sync dependencies (creates venv and installs all dependencies including dev tools)
 uv sync
@@ -28,6 +40,8 @@ uv sync
 uv run playwright install chromium
 
 # Run the MCP server
+uv run whosampled-connector
+# or
 uv run python -m whosampled_connector
 ```
 
@@ -35,8 +49,8 @@ uv run python -m whosampled_connector
 
 ```bash
 # Clone the repository
-git clone https://github.com/dj-oyu/whosampled-connector-.git
-cd whosampled-connector-
+git clone https://github.com/dj-oyu/whosampled-connector-mcp.git
+cd whosampled-connector-mcp
 
 # Install the package
 pip install -e .
@@ -45,6 +59,8 @@ pip install -e .
 playwright install chromium
 
 # Run the MCP server
+whosampled-connector
+# or
 python -m whosampled_connector
 ```
 
@@ -63,7 +79,9 @@ python -m whosampled_connector
 - Internet access (for fetching data from WhoSampled)
 - Playwright browser binaries
 
-### Option 1: Using uv (Recommended)
+**Quick Option:** If you just want to try it out without cloning, see [Using uvx](#using-uvx-easiest---no-installation-required) in Quick Start.
+
+### Option 1: Using uv (Recommended for Development)
 
 ```bash
 # Install uv if you haven't already
@@ -136,7 +154,26 @@ If successful, you should see track information. If you get a 403 error, try:
 
 ### Running the MCP Server
 
+**With uvx (no installation):**
 ```bash
+# First time only: install Playwright browsers
+uvx playwright install chromium
+
+# Run the server
+uvx --from git+https://github.com/dj-oyu/whosampled-connector-mcp whosampled-connector
+```
+
+**With uv:**
+```bash
+uv run whosampled-connector
+# or
+uv run python -m whosampled_connector
+```
+
+**With pip:**
+```bash
+whosampled-connector
+# or
 python -m whosampled_connector
 ```
 
