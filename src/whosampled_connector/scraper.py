@@ -26,8 +26,13 @@ class WhoSampledScraper:
                 headless=True,
                 args=[
                     '--disable-blink-features=AutomationControlled',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--disable-site-isolation-trials',
                     '--no-sandbox',
-                    '--disable-dev-shm-usage'
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor'
                 ]
             )
             self._initialized = True
@@ -46,22 +51,62 @@ class WhoSampledScraper:
 
         context = await self.browser.new_context(
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            viewport={'width': 1920, 'height': 1080}
+            viewport={'width': 1920, 'height': 1080},
+            locale='en-US',
+            timezone_id='America/New_York',
+            permissions=['geolocation'],
+            geolocation={'latitude': 40.7128, 'longitude': -74.0060},
+            extra_http_headers={
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Upgrade-Insecure-Requests': '1'
+            }
         )
 
         page = await context.new_page()
 
-        try:
-            # Navigate to page
-            await page.goto(url, wait_until='networkidle', timeout=30000)
+        # Inject stealth scripts before navigation
+        await page.add_init_script("""
+            // Override navigator.webdriver
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => false
+            });
 
-            # Wait a bit for any dynamic content
-            await page.wait_for_timeout(1000)
+            // Override chrome property
+            window.chrome = {
+                runtime: {}
+            };
+
+            // Override permissions
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+            );
+        """)
+
+        try:
+            # Navigate to page with more lenient wait condition
+            await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+
+            # Wait for page to be ready
+            await page.wait_for_load_state('domcontentloaded')
+
+            # Wait a bit longer for dynamic content
+            await page.wait_for_timeout(2000)
 
             # Get page content
             content = await page.content()
 
             return content
+
+        except Exception as e:
+            print(f"Error fetching page {url}: {e}")
+            raise
 
         finally:
             await page.close()
