@@ -46,13 +46,7 @@ async def debug_fetch():
             print("    The page is showing a browser verification challenge.")
             return
 
-        # Check for access denied
-        if '403' in html or 'Access Denied' in html or 'Forbidden' in html:
-            print("⚠️  ACCESS DENIED (403)")
-            print("    The request was blocked.")
-            return
-
-        # Look for track results
+        # Look for track results FIRST (before checking for 403)
         track_results = soup.select('li.trackName')
         print(f"  - Found {len(track_results)} elements with class 'trackName'")
 
@@ -60,28 +54,57 @@ async def debug_fetch():
         print(f"  - Found {len(track_links)} track links")
 
         if track_links:
-            print("\n4. Found tracks:")
+            print("\n4. ✓ Found tracks:")
             print("-" * 80)
             for i, link in enumerate(track_links[:5], 1):  # Show first 5
                 track_title = link.get_text(strip=True)
                 track_href = link.get('href', '')
                 print(f"  {i}. {track_title}")
                 print(f"     URL: {track_href}")
+
+            # Try the actual search_track method
+            print("\n5. Testing actual search_track() method:")
+            print("-" * 80)
+            result = await scraper.search_track('Daft Punk', 'One More Time')
+            if result:
+                print(f"  ✓ SUCCESS!")
+                print(f"    Title: {result.get('title')}")
+                print(f"    Artist: {result.get('artist')}")
+                print(f"    URL: {result.get('url')}")
+            else:
+                print(f"  ✗ search_track() returned None")
+                print(f"    This means CSS selector isn't matching correctly")
         else:
-            print("\n⚠️  NO TRACK RESULTS FOUND")
-            print("    Possible reasons:")
-            print("    1. Page structure has changed")
-            print("    2. Search returned no results")
-            print("    3. JavaScript-rendered content (not in static HTML)")
-            print("    4. Still being blocked by anti-bot")
+            print("\n4. ⚠️  NO TRACK RESULTS FOUND with 'li.trackName a'")
+            print("    Trying alternative selectors...")
+            print("-" * 80)
+
+            # Try different selectors
+            alternatives = [
+                ('li.trackName', 'List items with class trackName'),
+                ('.trackName', 'Any element with class trackName'),
+                ('li a', 'Any link in a list item'),
+                ('.listEntry', 'Elements with class listEntry'),
+                ('.searchResult', 'Elements with class searchResult'),
+            ]
+
+            for selector, description in alternatives:
+                elements = soup.select(selector)
+                print(f"  - {selector:20} ({description}): {len(elements)} found")
+                if elements and len(elements) > 0:
+                    first = elements[0]
+                    print(f"    First element: {first.get_text(strip=True)[:100]}")
 
             # Look for any links
-            all_links = soup.find_all('a', limit=10)
+            all_links = soup.find_all('a', limit=20)
             print(f"\n    Found {len(soup.find_all('a'))} total links on page")
             if all_links:
-                print("    First 10 links:")
-                for i, link in enumerate(all_links[:10], 1):
-                    print(f"      {i}. {link.get_text(strip=True)[:50]} - {link.get('href', '')[:50]}")
+                print("    First 20 links:")
+                for i, link in enumerate(all_links[:20], 1):
+                    text = link.get_text(strip=True)[:50]
+                    href = link.get('href', '')[:50]
+                    classes = link.get('class', [])
+                    print(f"      {i}. {text} | {href} | classes: {classes}")
 
         # Check for specific CSS classes
         print("\n5. Checking for other common classes:")
