@@ -30,11 +30,22 @@ pip install -e ".[dev]"
 python -m whosampled_connector
 ```
 
+The server will start and listen for MCP protocol messages on stdin/stdout.
+
+### Example Usage
+
+See `example_usage.py` for sample client interactions. Run it with:
+
+```bash
+python example_usage.py
+```
+
 ### Available Tools
 
 #### 1. search_track
 アーティスト名と曲名でWhoSampledを検索し、基本情報とURLを返します。
 
+**Input:**
 ```json
 {
   "artist": "Daft Punk",
@@ -42,26 +53,61 @@ python -m whosampled_connector
 }
 ```
 
+**Output:**
+```
+Track found on WhoSampled:
+
+Title: Harder, Better, Faster, Stronger
+Artist: Daft Punk
+URL: https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/
+
+Use get_track_samples or get_track_details_by_url to get detailed information about samples, covers, and remixes.
+```
+
 #### 2. get_track_samples
 アーティスト名と曲名で検索し、サンプリング、カバー、リミックスの詳細情報を取得します。
 
+**Input:**
 ```json
 {
-  "artist": "Daft Punk",
-  "track": "Harder Better Faster Stronger",
+  "artist": "Kanye West",
+  "track": "Stronger",
   "include_youtube": true
 }
+```
+
+**Output:**
+```
+Track: Stronger
+
+URL: https://www.whosampled.com/Kanye-West/Stronger/
+
+YouTube: https://www.youtube.com/watch?v=...
+
+=== SAMPLES (Tracks sampled by this song) ===
+  • Harder, Better, Faster, Stronger by Daft Punk
+    https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/
+
+=== SAMPLED BY (Tracks that sampled this song) ===
+  • [Various tracks that sampled Stronger]
+    
+=== COVERED BY (Artists who covered this song) ===
+  • [Cover versions]
 ```
 
 #### 3. get_track_details_by_url
 WhoSampledのURLから直接、詳細情報を取得します。
 
+**Input:**
 ```json
 {
-  "url": "https://www.whosampled.com/sample/...",
+  "url": "https://www.whosampled.com/sample/123456/...",
   "include_youtube": false
 }
 ```
+
+**Output:**
+Similar to get_track_samples, but retrieves information directly from the provided URL.
 
 ### Configuration for MCP Clients
 
