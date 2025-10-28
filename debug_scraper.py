@@ -46,46 +46,35 @@ async def debug_fetch():
             print("    The page is showing a browser verification challenge.")
             return
 
-        # Look for track results FIRST (before checking for 403)
-        track_results = soup.select('li.trackName')
-        print(f"  - Found {len(track_results)} elements with class 'trackName'")
+        # Look for track results with updated selectors
+        track_title_links = soup.select('a.trackTitle')
+        track_name_links = soup.select('a.trackName')
+        print(f"  - Found {len(track_title_links)} elements with 'a.trackTitle'")
+        print(f"  - Found {len(track_name_links)} elements with 'a.trackName'")
 
-        track_links = soup.select('li.trackName a')
-        print(f"  - Found {len(track_links)} track links")
-
-        if track_links:
-            print("\n4. ✓ Found tracks:")
-            print("-" * 80)
-            for i, link in enumerate(track_links[:5], 1):  # Show first 5
-                track_title = link.get_text(strip=True)
-                track_href = link.get('href', '')
-                print(f"  {i}. {track_title}")
-                print(f"     URL: {track_href}")
-
-            # Try the actual search_track method
-            print("\n5. Testing actual search_track() method:")
-            print("-" * 80)
-            result = await scraper.search_track('Daft Punk', 'One More Time')
-            if result:
-                print(f"  ✓ SUCCESS!")
-                print(f"    Title: {result.get('title')}")
-                print(f"    Artist: {result.get('artist')}")
-                print(f"    URL: {result.get('url')}")
-            else:
-                print(f"  ✗ search_track() returned None")
-                print(f"    This means CSS selector isn't matching correctly")
+        # Try the actual search_track method FIRST
+        print("\n4. Testing actual search_track() method:")
+        print("-" * 80)
+        result = await scraper.search_track('Daft Punk', 'One More Time')
+        if result:
+            print(f"  ✓ SUCCESS!")
+            print(f"    Title: {result.get('title')}")
+            print(f"    Artist: {result.get('artist')}")
+            print(f"    URL: {result.get('url')}")
         else:
-            print("\n4. ⚠️  NO TRACK RESULTS FOUND with 'li.trackName a'")
-            print("    Trying alternative selectors...")
+            print(f"  ✗ search_track() returned None")
+            print(f"    This means CSS selector isn't matching correctly")
+
+            print("\n5. Debugging selector issue...")
             print("-" * 80)
 
             # Try different selectors
             alternatives = [
-                ('li.trackName', 'List items with class trackName'),
+                ('a.trackTitle', 'Links with class trackTitle'),
+                ('a.trackName', 'Links with class trackName'),
                 ('.trackName', 'Any element with class trackName'),
                 ('li a', 'Any link in a list item'),
                 ('.listEntry', 'Elements with class listEntry'),
-                ('.searchResult', 'Elements with class searchResult'),
             ]
 
             for selector, description in alternatives:
@@ -94,6 +83,7 @@ async def debug_fetch():
                 if elements and len(elements) > 0:
                     first = elements[0]
                     print(f"    First element: {first.get_text(strip=True)[:100]}")
+                    print(f"    First href: {first.get('href', 'N/A')[:100]}")
 
             # Look for any links
             all_links = soup.find_all('a', limit=20)
@@ -106,18 +96,10 @@ async def debug_fetch():
                     classes = link.get('class', [])
                     print(f"      {i}. {text} | {href} | classes: {classes}")
 
-        # Check for specific CSS classes
-        print("\n5. Checking for other common classes:")
-        print("-" * 80)
-        classes_to_check = ['.trackItem', '.sampleEntry', '.searchResult', '.result', '.track']
-        for css_class in classes_to_check:
-            elements = soup.select(css_class)
-            print(f"  - {css_class}: {len(elements)} found")
-
         # Save HTML to file for inspection
         with open('/tmp/whosampled_debug.html', 'w', encoding='utf-8') as f:
             f.write(html)
-        print(f"\n6. Full HTML saved to: /tmp/whosampled_debug.html")
+        print(f"\n\n6. Full HTML saved to: /tmp/whosampled_debug.html")
         print("   You can inspect this file to see the actual page content.")
 
     except Exception as e:
