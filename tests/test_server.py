@@ -1,7 +1,7 @@
 """Tests for MCP server tools."""
 import pytest
 from unittest.mock import AsyncMock, patch
-from whosampled_connector.server import call_tool, list_tools, _format_track_details
+from whosampled_connector.server import call_tool, list_tools, _format_track_details, scraper
 
 
 @pytest.mark.asyncio
@@ -58,13 +58,33 @@ async def test_search_track_tool_not_found():
 
 @pytest.mark.asyncio
 async def test_search_track_tool_missing_params():
-    """Test search_track tool with missing parameters."""
-    result = await call_tool("search_track", {"artist": "Daft Punk"})
+    """Test search_track tool with missing artist parameter."""
+    result = await call_tool("search_track", {"track": "One More Time"})
 
     assert len(result) == 1
     assert result[0].type == "text"
     assert "Error" in result[0].text
-    assert "required" in result[0].text
+    assert "Artist name is required" in result[0].text
+
+
+@pytest.mark.asyncio
+async def test_search_track_tool_artist_only():
+    """Test search_track tool with artist only (no track name)."""
+    mock_result = {
+        "title": "Some Track",
+        "artist": "Daft Punk",
+        "url": "https://www.whosampled.com/Daft-Punk/Some-Track/"
+    }
+
+    with patch.object(scraper, 'search_track', new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_result
+
+        result = await call_tool("search_track", {"artist": "Daft Punk", "track": ""})
+
+        assert len(result) == 1
+        assert result[0].type == "text"
+        assert "Daft Punk" in result[0].text
+        assert "Some Track" in result[0].text
 
 
 @pytest.mark.asyncio
