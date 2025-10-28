@@ -4,6 +4,23 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 アーティスト名、曲名などの文字列を受け取ってWhoSampled?で検索を実行し、その曲のサンプリングソースやカバー音源などを発見するためのMCPサーバーです。希望に応じてYouTubeのリンクも返します。
 
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/dj-oyu/whosampled-connector-.git
+cd whosampled-connector-
+
+# Install the package
+pip install -e .
+
+# Run the MCP server
+python -m whosampled_connector
+
+# Or run the example usage
+python example_usage.py
+```
+
 ## Features
 
 - アーティスト名と曲名でWhoSampledを検索
@@ -13,6 +30,10 @@ WhoSampledで検索して結果を返すMCPサーバー
 - オプションでYouTubeリンクの取得
 
 ## Installation
+
+**Requirements:**
+- Python 3.10 or higher
+- Internet access (for fetching data from WhoSampled)
 
 ```bash
 # Install dependencies
