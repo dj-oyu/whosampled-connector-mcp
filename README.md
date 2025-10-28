@@ -14,6 +14,8 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 ## Quick Start
 
+### Using pip
+
 ```bash
 # Clone the repository
 git clone https://github.com/dj-oyu/whosampled-connector-.git
@@ -22,11 +24,34 @@ cd whosampled-connector-
 # Install the package
 pip install -e .
 
+# Install Playwright browser
+playwright install chromium
+
 # Run the MCP server
 python -m whosampled_connector
 
 # Or run the example usage
 python example_usage.py
+```
+
+### Using uv (Faster)
+
+```bash
+# Clone the repository
+git clone https://github.com/dj-oyu/whosampled-connector-.git
+cd whosampled-connector-
+
+# Create and activate virtual environment
+uv venv && source .venv/bin/activate
+
+# Install the package
+uv pip install -e .
+
+# Install Playwright browser
+playwright install chromium
+
+# Run the MCP server
+python -m whosampled_connector
 ```
 
 ## Features
@@ -44,6 +69,8 @@ python example_usage.py
 - Internet access (for fetching data from WhoSampled)
 - Playwright browser binaries
 
+### Option 1: Using pip
+
 ```bash
 # Install dependencies
 pip install -e .
@@ -54,6 +81,54 @@ playwright install chromium
 # For development
 pip install -e ".[dev]"
 ```
+
+### Option 2: Using uv (Recommended for faster installation)
+
+```bash
+# Install uv if you haven't already
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment
+uv venv
+
+# Activate virtual environment
+source .venv/bin/activate  # On Unix/macOS
+# .venv\Scripts\activate   # On Windows
+
+# Install dependencies
+uv pip install -e .
+
+# Install Playwright browser (Chromium)
+playwright install chromium
+
+# For development
+uv pip install -e ".[dev]"
+```
+
+### Quick Test (Verify Installation)
+
+After installation, test the scraper directly:
+
+```bash
+# Test with a simple search
+python -c "
+from whosampled_connector.scraper import WhoSampledScraper
+import asyncio
+
+async def test():
+    scraper = WhoSampledScraper()
+    result = await scraper.search_track('Daft Punk', 'One More Time')
+    print(result)
+    await scraper.aclose()
+
+asyncio.run(test())
+"
+```
+
+If successful, you should see track information. If you get a 403 error, try:
+- Testing from a different network (residential, not datacenter/cloud)
+- Using a VPN
+- Checking if your IP is blocked
 
 ## Usage
 
