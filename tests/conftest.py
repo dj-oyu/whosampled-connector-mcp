@@ -13,6 +13,24 @@ async def scraper():
     await scraper.aclose()
 
 
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def cleanup_global_scraper(request):
+    """Clean up global scraper after each integration test."""
+    # Only run for integration tests
+    if "integration" in request.keywords:
+        yield
+        # After test, clean up the global scraper
+        from whosampled_connector import server
+        if server.scraper._initialized:
+            await server.scraper.aclose()
+            # Reset the scraper state
+            server.scraper._initialized = False
+            server.scraper.browser = None
+            server.scraper.playwright = None
+    else:
+        yield
+
+
 @pytest.fixture
 def mock_search_html():
     """Mock HTML response for search results with actual WhoSampled structure."""
