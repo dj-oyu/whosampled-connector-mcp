@@ -2,19 +2,31 @@
 
 ## Automated Tests
 
-All automated tests use mocked HTTP responses to avoid depending on the live WhoSampled website.
+### Current Test Status (Post-Playwright Migration)
+
+Since the scraper now uses Playwright headless browser instead of HTTP requests:
+
+✅ **Working Tests** (12 tests):
+- `tests/test_server.py` - All MCP server tool tests pass
+- These tests mock the scraper, so they work independently of the implementation
+
+❌ **Requires Update** (16 tests):
+- `tests/test_scraper.py` - Uses httpx_mock, incompatible with Playwright
+- `tests/test_e2e.py` - Uses httpx_mock, incompatible with Playwright
+
+These tests need to be rewritten to mock Playwright instead of httpx, or converted to integration tests.
 
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
+# Run working tests only
+pytest tests/test_server.py -v
 
-# Run with verbose output
+# Run all tests (some will fail)
 pytest -v
 
-# Run specific test file
-pytest tests/test_scraper.py
+# Skip failing tests
+pytest -v -k "not scraper and not e2e"
 ```
 
 ## Verifying Mock HTML Against Live Site

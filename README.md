@@ -4,14 +4,13 @@ WhoSampledで検索して結果を返すMCPサーバー
 
 アーティスト名、曲名などの文字列を受け取ってWhoSampled?で検索を実行し、その曲のサンプリングソースやカバー音源などを発見するためのMCPサーバーです。希望に応じてYouTubeのリンクも返します。
 
-## ⚠️ Important Notice
+## ✅ Anti-Bot Solution Implemented
 
-**This project currently faces feasibility challenges due to WhoSampled's anti-bot protection.** Automated HTTP requests are blocked with 403 errors. See [FEASIBILITY.md](FEASIBILITY.md) for:
-- Detailed analysis of the issue
-- Recommended solutions (headless browser, API access, etc.)
-- Testing results and next steps
+**This project now uses Playwright headless browser to bypass WhoSampled's anti-bot protection.** The scraper has been rewritten to use a real browser instead of HTTP requests.
 
-**Status**: Requires implementation of anti-bot bypass solution before production use.
+**Status**: Implementation complete. Ready for testing on local machines with residential IPs.
+
+⚠️ **Note**: Cloud/datacenter IPs may still be blocked. Test from your local development environment.
 
 ## Quick Start
 
@@ -43,10 +42,14 @@ python example_usage.py
 **Requirements:**
 - Python 3.10 or higher
 - Internet access (for fetching data from WhoSampled)
+- Playwright browser binaries
 
 ```bash
 # Install dependencies
 pip install -e .
+
+# Install Playwright browser (Chromium)
+playwright install chromium
 
 # For development
 pip install -e ".[dev]"
