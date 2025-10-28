@@ -11,6 +11,9 @@ dependencies = [
     "lxml>=5.0.0",
 ]
 
+[project.scripts]
+whosampled-connector = "whosampled_connector.server:cli"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
