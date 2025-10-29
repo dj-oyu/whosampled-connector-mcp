@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures."""
+
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
@@ -10,7 +11,7 @@ def check_internet_connection():
     """Check if internet connection is available."""
     try:
         # Try to resolve whosampled.com
-        socket.gethostbyname('www.whosampled.com')
+        socket.gethostbyname("www.whosampled.com")
         return True
     except (socket.gaierror, socket.error):
         return False
@@ -21,7 +22,9 @@ def skip_if_no_internet(request):
     """Skip integration tests if no internet connection is available."""
     if "integration" in request.keywords:
         if not check_internet_connection():
-            pytest.skip("Integration test requires internet connection to whosampled.com")
+            pytest.skip(
+                "Integration test requires internet connection to whosampled.com"
+            )
 
 
 @pytest_asyncio.fixture
@@ -40,6 +43,7 @@ async def cleanup_global_scraper(request):
         yield
         # After test, clean up the global scraper
         from whosampled_connector import server
+
         if server.scraper._initialized:
             await server.scraper.aclose()
             # Reset the scraper state

@@ -1,7 +1,13 @@
 """Tests for MCP server tools."""
+
 import pytest
 from unittest.mock import AsyncMock, patch
-from whosampled_connector.server import call_tool, list_tools, _format_track_details, scraper
+from whosampled_connector.server import (
+    call_tool,
+    list_tools,
+    _format_track_details,
+    scraper,
+)
 
 
 @pytest.mark.asyncio
@@ -23,16 +29,18 @@ async def test_search_track_tool_success():
     mock_result = {
         "title": "Harder, Better, Faster, Stronger",
         "artist": "Daft Punk",
-        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/"
+        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/",
     }
 
-    with patch('whosampled_connector.server.scraper.search_track', new_callable=AsyncMock) as mock_search:
+    with patch(
+        "whosampled_connector.server.scraper.search_track", new_callable=AsyncMock
+    ) as mock_search:
         mock_search.return_value = mock_result
 
-        result = await call_tool("search_track", {
-            "artist": "Daft Punk",
-            "track": "Harder Better Faster Stronger"
-        })
+        result = await call_tool(
+            "search_track",
+            {"artist": "Daft Punk", "track": "Harder Better Faster Stronger"},
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -44,13 +52,14 @@ async def test_search_track_tool_success():
 @pytest.mark.asyncio
 async def test_search_track_tool_not_found():
     """Test search_track tool with no results."""
-    with patch('whosampled_connector.server.scraper.search_track', new_callable=AsyncMock) as mock_search:
+    with patch(
+        "whosampled_connector.server.scraper.search_track", new_callable=AsyncMock
+    ) as mock_search:
         mock_search.return_value = None
 
-        result = await call_tool("search_track", {
-            "artist": "Unknown Artist",
-            "track": "Unknown Track"
-        })
+        result = await call_tool(
+            "search_track", {"artist": "Unknown Artist", "track": "Unknown Track"}
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -74,10 +83,10 @@ async def test_search_track_tool_artist_only():
     mock_result = {
         "title": "Some Track",
         "artist": "Daft Punk",
-        "url": "https://www.whosampled.com/Daft-Punk/Some-Track/"
+        "url": "https://www.whosampled.com/Daft-Punk/Some-Track/",
     }
 
-    with patch.object(scraper, 'search_track', new_callable=AsyncMock) as mock_search:
+    with patch.object(scraper, "search_track", new_callable=AsyncMock) as mock_search:
         mock_search.return_value = mock_result
 
         result = await call_tool("search_track", {"artist": "Daft Punk", "track": ""})
@@ -94,7 +103,7 @@ async def test_get_track_samples_tool_success():
     mock_search_result = {
         "title": "Harder, Better, Faster, Stronger",
         "artist": "Daft Punk",
-        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/"
+        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/",
     }
 
     mock_details = {
@@ -104,32 +113,42 @@ async def test_get_track_samples_tool_success():
             {
                 "track": "Cola Bottle Baby",
                 "artist": "Edwin Birdsong",
-                "url": "https://www.whosampled.com/Edwin-Birdsong/Cola-Bottle-Baby/"
+                "url": "https://www.whosampled.com/Edwin-Birdsong/Cola-Bottle-Baby/",
             }
         ],
         "sampled_by": [
             {
                 "track": "Stronger",
                 "artist": "Kanye West",
-                "url": "https://www.whosampled.com/Kanye-West/Stronger/"
+                "url": "https://www.whosampled.com/Kanye-West/Stronger/",
             }
         ],
         "covers": [],
         "covered_by": [],
         "remixes": [],
-        "remixed_by": []
+        "remixed_by": [],
     }
 
-    with patch('whosampled_connector.server.scraper.search_track', new_callable=AsyncMock) as mock_search, \
-         patch('whosampled_connector.server.scraper.get_track_details', new_callable=AsyncMock) as mock_get_details:
+    with (
+        patch(
+            "whosampled_connector.server.scraper.search_track", new_callable=AsyncMock
+        ) as mock_search,
+        patch(
+            "whosampled_connector.server.scraper.get_track_details",
+            new_callable=AsyncMock,
+        ) as mock_get_details,
+    ):
         mock_search.return_value = mock_search_result
         mock_get_details.return_value = mock_details
 
-        result = await call_tool("get_track_samples", {
-            "artist": "Daft Punk",
-            "track": "Harder Better Faster Stronger",
-            "include_youtube": False
-        })
+        result = await call_tool(
+            "get_track_samples",
+            {
+                "artist": "Daft Punk",
+                "track": "Harder Better Faster Stronger",
+                "include_youtube": False,
+            },
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -144,7 +163,7 @@ async def test_get_track_samples_with_youtube():
     mock_search_result = {
         "title": "Harder, Better, Faster, Stronger",
         "artist": "Daft Punk",
-        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/"
+        "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/",
     }
 
     mock_details = {
@@ -156,19 +175,29 @@ async def test_get_track_samples_with_youtube():
         "covers": [],
         "covered_by": [],
         "remixes": [],
-        "remixed_by": []
+        "remixed_by": [],
     }
 
-    with patch('whosampled_connector.server.scraper.search_track', new_callable=AsyncMock) as mock_search, \
-         patch('whosampled_connector.server.scraper.get_track_details', new_callable=AsyncMock) as mock_get_details:
+    with (
+        patch(
+            "whosampled_connector.server.scraper.search_track", new_callable=AsyncMock
+        ) as mock_search,
+        patch(
+            "whosampled_connector.server.scraper.get_track_details",
+            new_callable=AsyncMock,
+        ) as mock_get_details,
+    ):
         mock_search.return_value = mock_search_result
         mock_get_details.return_value = mock_details
 
-        result = await call_tool("get_track_samples", {
-            "artist": "Daft Punk",
-            "track": "Harder Better Faster Stronger",
-            "include_youtube": True
-        })
+        result = await call_tool(
+            "get_track_samples",
+            {
+                "artist": "Daft Punk",
+                "track": "Harder Better Faster Stronger",
+                "include_youtube": True,
+            },
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -187,16 +216,21 @@ async def test_get_track_details_by_url_tool():
         "covers": [],
         "covered_by": [],
         "remixes": [],
-        "remixed_by": []
+        "remixed_by": [],
     }
 
-    with patch('whosampled_connector.server.scraper.get_track_details', new_callable=AsyncMock) as mock_get_details:
+    with patch(
+        "whosampled_connector.server.scraper.get_track_details", new_callable=AsyncMock
+    ) as mock_get_details:
         mock_get_details.return_value = mock_details
 
-        result = await call_tool("get_track_details_by_url", {
-            "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/",
-            "include_youtube": False
-        })
+        result = await call_tool(
+            "get_track_details_by_url",
+            {
+                "url": "https://www.whosampled.com/Daft-Punk/Harder,-Better,-Faster,-Stronger/",
+                "include_youtube": False,
+            },
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -235,7 +269,7 @@ def test_format_track_details_with_all_sections():
         "covers": [{"track": "Cover 1", "artist": "Artist 3", "url": "url3"}],
         "covered_by": [{"track": "Cover 2", "artist": "Artist 4", "url": "url4"}],
         "remixes": [{"track": "Remix 1", "artist": "Artist 5", "url": "url5"}],
-        "remixed_by": [{"track": "Remix 2", "artist": "Artist 6", "url": "url6"}]
+        "remixed_by": [{"track": "Remix 2", "artist": "Artist 6", "url": "url6"}],
     }
 
     result = _format_track_details(details)
@@ -260,7 +294,7 @@ def test_format_track_details_empty():
         "covers": [],
         "covered_by": [],
         "remixes": [],
-        "remixed_by": []
+        "remixed_by": [],
     }
 
     result = _format_track_details(details)
@@ -273,7 +307,7 @@ def test_format_track_details_with_error():
     """Test formatting track details with error."""
     details = {
         "error": "HTTP error occurred",
-        "url": "https://www.whosampled.com/test/"
+        "url": "https://www.whosampled.com/test/",
     }
 
     result = _format_track_details(details)
@@ -292,7 +326,7 @@ async def test_get_youtube_links_tool_success():
                 "track": "One More Time",
                 "artist": "Daft Punk",
                 "url": "https://www.whosampled.com/Daft-Punk/One-More-Time/",
-                "youtube_url": "https://www.youtube.com/watch?v=test123"
+                "youtube_url": "https://www.youtube.com/watch?v=test123",
             }
         ],
         "connections": [
@@ -300,7 +334,7 @@ async def test_get_youtube_links_tool_success():
                 "track": "Connection Track",
                 "artist": "Connection Artist",
                 "url": "https://www.whosampled.com/Connection/Track/",
-                "youtube_url": "https://www.youtube.com/watch?v=connection"
+                "youtube_url": "https://www.youtube.com/watch?v=connection",
             }
         ],
         "tracks": [
@@ -308,19 +342,21 @@ async def test_get_youtube_links_tool_success():
                 "track": "Related Track",
                 "artist": "Related Artist",
                 "url": "https://www.whosampled.com/Related/Track/",
-                "youtube_url": None
+                "youtube_url": None,
             }
-        ]
+        ],
     }
 
-    with patch('whosampled_connector.server.scraper.get_youtube_links_from_search', new_callable=AsyncMock) as mock_get:
+    with patch(
+        "whosampled_connector.server.scraper.get_youtube_links_from_search",
+        new_callable=AsyncMock,
+    ) as mock_get:
         mock_get.return_value = mock_result
 
-        result = await call_tool("get_youtube_links", {
-            "artist": "Daft Punk",
-            "track": "One More Time",
-            "max_per_section": 3
-        })
+        result = await call_tool(
+            "get_youtube_links",
+            {"artist": "Daft Punk", "track": "One More Time", "max_per_section": 3},
+        )
 
         assert len(result) == 1
         assert result[0].type == "text"
@@ -361,17 +397,19 @@ async def test_get_youtube_links_tool_with_custom_max():
         "query": "Test Query",
         "top_hit": [],
         "connections": [],
-        "tracks": []
+        "tracks": [],
     }
 
-    with patch('whosampled_connector.server.scraper.get_youtube_links_from_search', new_callable=AsyncMock) as mock_get:
+    with patch(
+        "whosampled_connector.server.scraper.get_youtube_links_from_search",
+        new_callable=AsyncMock,
+    ) as mock_get:
         mock_get.return_value = mock_result
 
-        result = await call_tool("get_youtube_links", {
-            "artist": "Artist",
-            "track": "Track",
-            "max_per_section": 5
-        })
+        result = await call_tool(
+            "get_youtube_links",
+            {"artist": "Artist", "track": "Track", "max_per_section": 5},
+        )
 
         # Verify the method was called with correct max_per_section
         mock_get.assert_called_once_with("Artist", "Track", 5)
@@ -389,7 +427,7 @@ def test_format_youtube_links_with_all_sections():
                 "track": "One More Time",
                 "artist": "Daft Punk",
                 "url": "https://www.whosampled.com/test1/",
-                "youtube_url": "https://www.youtube.com/watch?v=1"
+                "youtube_url": "https://www.youtube.com/watch?v=1",
             }
         ],
         "connections": [
@@ -397,7 +435,7 @@ def test_format_youtube_links_with_all_sections():
                 "track": "Connection",
                 "artist": "Artist",
                 "url": "https://www.whosampled.com/test2/",
-                "youtube_url": "https://www.youtube.com/watch?v=2"
+                "youtube_url": "https://www.youtube.com/watch?v=2",
             }
         ],
         "tracks": [
@@ -405,9 +443,9 @@ def test_format_youtube_links_with_all_sections():
                 "track": "Track",
                 "artist": "Artist",
                 "url": "https://www.whosampled.com/test3/",
-                "youtube_url": None
+                "youtube_url": None,
             }
-        ]
+        ],
     }
 
     result = _format_youtube_links(result_data)
@@ -430,7 +468,7 @@ def test_format_youtube_links_empty():
         "query": "Unknown Track",
         "top_hit": [],
         "connections": [],
-        "tracks": []
+        "tracks": [],
     }
 
     result = _format_youtube_links(result_data)
@@ -443,13 +481,9 @@ def test_format_youtube_links_with_error():
     """Test formatting YouTube links with error."""
     from whosampled_connector.server import _format_youtube_links
 
-    result_data = {
-        "error": "Network error occurred",
-        "query": "Test"
-    }
+    result_data = {"error": "Network error occurred", "query": "Test"}
 
     result = _format_youtube_links(result_data)
 
     assert "Error" in result
     assert "Network error occurred" in result
-
