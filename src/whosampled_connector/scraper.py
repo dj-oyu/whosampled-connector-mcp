@@ -330,9 +330,13 @@ class WhoSampledScraper:
                 try:
                     html = await self._fetch_page(track_url)
                     soup = BeautifulSoup(html, 'lxml')
-                    youtube_link = soup.select_one('a[href*="youtube.com"], a[href*="youtu.be"]')
-                    if youtube_link:
-                        track_info["youtube_url"] = youtube_link.get('href', '')
+
+                    # WhoSampled uses data-id attribute for YouTube video IDs
+                    youtube_embed = soup.select_one('div.embed-placeholder[data-id], div.youtube-placeholder[data-id]')
+                    if youtube_embed:
+                        video_id = youtube_embed.get('data-id', '')
+                        if video_id:
+                            track_info["youtube_url"] = f"https://www.youtube.com/watch?v={video_id}"
                 except Exception as e:
                     print(f"Error fetching YouTube link for {track_url}: {e}")
 
@@ -374,9 +378,12 @@ class WhoSampledScraper:
 
             # Get YouTube link if requested
             if include_youtube:
-                youtube_link = soup.select_one('a[href*="youtube.com"], a[href*="youtu.be"]')
-                if youtube_link:
-                    result["youtube_url"] = youtube_link.get('href', '')
+                # WhoSampled uses data-id attribute for YouTube video IDs
+                youtube_embed = soup.select_one('div.embed-placeholder[data-id], div.youtube-placeholder[data-id]')
+                if youtube_embed:
+                    video_id = youtube_embed.get('data-id', '')
+                    if video_id:
+                        result["youtube_url"] = f"https://www.youtube.com/watch?v={video_id}"
 
             # Find all subsections (WhoSampled uses section.subsection with headers)
             subsections = soup.select('section.subsection')

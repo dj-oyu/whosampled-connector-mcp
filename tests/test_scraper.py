@@ -185,7 +185,7 @@ async def test_get_youtube_links_from_search(scraper):
     <html>
         <body>
             <h1 class="trackName">Track Title</h1>
-            <a href="https://www.youtube.com/watch?v=test">YouTube</a>
+            <div class="embed-placeholder youtube-placeholder" data-id="test"></div>
         </body>
     </html>
     """
@@ -257,7 +257,7 @@ async def test_extract_single_track_with_youtube(scraper):
     track_page_html = """
     <html>
         <body>
-            <a href="https://www.youtube.com/watch?v=abc123">YouTube Link</a>
+            <div class="embed-placeholder youtube-placeholder" data-id="abc123"></div>
         </body>
     </html>
     """

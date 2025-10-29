@@ -74,7 +74,7 @@ def mock_track_details_html():
     <html>
         <body>
             <h1 class="trackName">Harder, Better, Faster, Stronger</h1>
-            <a href="https://www.youtube.com/watch?v=gAjR4_CbPpQ">YouTube</a>
+            <div class="embed-placeholder youtube-placeholder" data-id="gAjR4_CbPpQ"></div>
 
             <section class="subsection" id="samples">
                 <h3>Contains samples</h3>
