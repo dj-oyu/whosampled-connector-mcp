@@ -154,3 +154,146 @@ async def test_extract_connections():
     assert connections[1]["artist"] == "Artist 2"
 
     await scraper.aclose()
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_from_search(scraper):
+    """Test getting YouTube links from search results."""
+    mock_search_html = """
+    <html>
+        <body>
+            <div class="topResult">
+                <a class="trackName" href="/Daft-Punk/One-More-Time/">One More Time</a>
+                <a href="/Daft-Punk/">Daft Punk</a>
+            </div>
+            <section class="connections">
+                <a class="trackName" href="/Connection/Track/">Connection Track</a>
+                <a href="/Artist/">Connection Artist</a>
+            </section>
+            <div class="tracks">
+                <a class="trackName" href="/Other/Track/">Other Track</a>
+                <a href="/Other-Artist/">Other Artist</a>
+            </div>
+        </body>
+    </html>
+    """
+
+    mock_track_page_html = """
+    <html>
+        <body>
+            <h1 class="trackName">Track Title</h1>
+            <a href="https://www.youtube.com/watch?v=test">YouTube</a>
+        </body>
+    </html>
+    """
+
+    with patch.object(scraper, '_fetch_page', new_callable=AsyncMock) as mock_fetch:
+        # First call returns search results, subsequent calls return track pages
+        mock_fetch.side_effect = [mock_search_html] + [mock_track_page_html] * 10
+
+        result = await scraper.get_youtube_links_from_search("Daft Punk", "One More Time", max_per_section=2)
+
+        assert result is not None
+        assert "error" not in result
+        assert result["query"] == "Daft Punk One More Time"
+        assert "top_hit" in result
+        assert "connections" in result
+        assert "tracks" in result
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_from_search_no_results(scraper):
+    """Test getting YouTube links with no search results."""
+    empty_html = "<html><body></body></html>"
+
+    with patch.object(scraper, '_fetch_page', new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = empty_html
+
+        result = await scraper.get_youtube_links_from_search("Unknown", "Track", max_per_section=3)
+
+        assert result is not None
+        assert result["query"] == "Unknown Track"
+        assert len(result["top_hit"]) == 0
+        assert len(result["connections"]) == 0
+        assert len(result["tracks"]) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_from_search_error(scraper):
+    """Test error handling in get_youtube_links_from_search."""
+    with patch.object(scraper, '_fetch_page', new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.side_effect = Exception("Network error")
+
+        result = await scraper.get_youtube_links_from_search("Artist", "Track", max_per_section=3)
+
+        assert "error" in result
+        assert "Network error" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_extract_single_track_with_youtube(scraper):
+    """Test extracting a single track with YouTube link."""
+    from bs4 import BeautifulSoup
+
+    html = """
+    <div>
+        <a class="trackName" href="/Test/Track/">Test Track</a>
+        <span class="trackArtist">Test Artist</span>
+    </div>
+    """
+
+    track_page_html = """
+    <html>
+        <body>
+            <a href="https://www.youtube.com/watch?v=abc123">YouTube Link</a>
+        </body>
+    </html>
+    """
+
+    soup = BeautifulSoup(html, 'lxml')
+    track_link = soup.select_one('a.trackName')
+
+    with patch.object(scraper, '_fetch_page', new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = track_page_html
+
+        result = await scraper._extract_single_track_with_youtube(track_link)
+
+        assert result is not None
+        assert result["track"] == "Test Track"
+        assert result["artist"] == "Test Artist"
+        assert result["url"] == "https://www.whosampled.com/Test/Track/"
+        assert result["youtube_url"] == "https://www.youtube.com/watch?v=abc123"
+
+
+@pytest.mark.asyncio
+async def test_extract_single_track_without_youtube(scraper):
+    """Test extracting a single track without YouTube link."""
+    from bs4 import BeautifulSoup
+
+    html = """
+    <div>
+        <a class="trackName" href="/Test/Track/">Test Track</a>
+        <span class="trackArtist">Test Artist</span>
+    </div>
+    """
+
+    track_page_html = """
+    <html>
+        <body>
+            <p>No YouTube link here</p>
+        </body>
+    </html>
+    """
+
+    soup = BeautifulSoup(html, 'lxml')
+    track_link = soup.select_one('a.trackName')
+
+    with patch.object(scraper, '_fetch_page', new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = track_page_html
+
+        result = await scraper._extract_single_track_with_youtube(track_link)
+
+        assert result is not None
+        assert result["track"] == "Test Track"
+        assert result["artist"] == "Test Artist"
+        assert result["youtube_url"] is None

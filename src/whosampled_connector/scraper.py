@@ -160,6 +160,179 @@ class WhoSampledScraper:
             print(f"Error searching track: {e}")
             return None
 
+    async def get_youtube_links_from_search(self, artist: str, track: str, max_per_section: int = 3) -> Dict:
+        """
+        Get YouTube links from search results with priority: Top Hit > Connections > Tracks.
+
+        Args:
+            artist: Artist name
+            track: Track name
+            max_per_section: Maximum number of tracks to get from each section (default: 3)
+
+        Returns:
+            Dictionary with YouTube links organized by section priority
+        """
+        query = f"{artist} {track}"
+        params = urllib.parse.urlencode({"q": query})
+        search_url = f"{self.SEARCH_URL}?{params}"
+
+        result = {
+            "query": query,
+            "top_hit": [],
+            "connections": [],
+            "tracks": []
+        }
+
+        try:
+            html = await self._fetch_page(search_url)
+            soup = BeautifulSoup(html, 'lxml')
+
+            # Find sections in the search results
+            # WhoSampled typically has: top result, connections, and tracks sections
+
+            # Try to identify Top Hit (usually the first prominent result)
+            top_hit_section = soup.select_one('div.topResult, div.top-result, section.topResult')
+            if top_hit_section:
+                tracks = await self._extract_tracks_with_youtube(top_hit_section, max_per_section)
+                result["top_hit"] = tracks
+            elif not top_hit_section:
+                # If no specific top hit section, treat first track as top hit
+                first_track = soup.select_one('a.trackTitle, a.trackName')
+                if first_track:
+                    tracks = await self._extract_tracks_with_youtube(soup, 1, start_from_first=True)
+                    if tracks:
+                        result["top_hit"] = tracks
+
+            # Find Connections section
+            connections_section = soup.find('section', string=lambda t: t and 'connection' in t.lower() if isinstance(t, str) else False)
+            if not connections_section:
+                # Try finding by header
+                for header in soup.find_all(['h2', 'h3', 'h4']):
+                    if header and 'connection' in header.get_text(strip=True).lower():
+                        connections_section = header.find_parent('section')
+                        break
+
+            if connections_section:
+                tracks = await self._extract_tracks_with_youtube(connections_section, max_per_section)
+                result["connections"] = tracks
+
+            # Find Tracks section (general results)
+            # Usually all track results not in top hit or connections
+            all_track_links = soup.select('a.trackTitle, a.trackName')
+
+            # Filter out tracks already in top_hit or connections
+            existing_urls = set()
+            for section_tracks in [result["top_hit"], result["connections"]]:
+                for t in section_tracks:
+                    existing_urls.add(t["url"])
+
+            tracks_to_process = []
+            for track_link in all_track_links:
+                track_url = self.BASE_URL + track_link.get('href', '')
+                if track_url not in existing_urls and len(tracks_to_process) < max_per_section:
+                    tracks_to_process.append(track_link)
+
+            # Extract YouTube links for remaining tracks
+            for track_link in tracks_to_process:
+                track_info = await self._extract_single_track_with_youtube(track_link)
+                if track_info:
+                    result["tracks"].append(track_info)
+
+            return result
+
+        except Exception as e:
+            print(f"Error getting YouTube links from search: {e}")
+            return {"error": str(e), "query": query}
+
+    async def _extract_tracks_with_youtube(self, section, max_count: int, start_from_first: bool = False) -> List[Dict]:
+        """
+        Extract tracks with YouTube links from a section.
+
+        Args:
+            section: BeautifulSoup section element
+            max_count: Maximum number of tracks to extract
+            start_from_first: If True, start from the first track in the section
+
+        Returns:
+            List of dictionaries with track information and YouTube links
+        """
+        tracks = []
+        track_links = section.select('a.trackTitle, a.trackName')
+
+        for i, track_link in enumerate(track_links):
+            if i >= max_count:
+                break
+
+            track_info = await self._extract_single_track_with_youtube(track_link)
+            if track_info:
+                tracks.append(track_info)
+
+        return tracks
+
+    async def _extract_single_track_with_youtube(self, track_link) -> Optional[Dict]:
+        """
+        Extract a single track's information with YouTube link.
+
+        Args:
+            track_link: BeautifulSoup track link element
+
+        Returns:
+            Dictionary with track information and YouTube link, or None
+        """
+        try:
+            track_name = track_link.get_text(strip=True)
+            track_href = track_link.get('href', '')
+            track_url = self.BASE_URL + track_href if track_href else ""
+
+            # Extract artist name - check for span.trackArtist first, then <a> tag
+            artist_name = "Unknown"
+
+            # First, try to find span.trackArtist
+            artist_span = track_link.find_next_sibling('span', class_='trackArtist')
+            if artist_span:
+                artist_name = artist_span.get_text(strip=True)
+            else:
+                # Try to find the next sibling <a> tag
+                next_link = track_link.find_next_sibling('a')
+                if next_link and 'trackName' not in next_link.get('class', []) and 'trackTitle' not in next_link.get('class', []):
+                    artist_name = next_link.get_text(strip=True)
+                else:
+                    parent = track_link.parent
+                    if parent:
+                        all_links = parent.find_all('a')
+                        try:
+                            track_index = all_links.index(track_link)
+                            if track_index + 1 < len(all_links):
+                                artist_link = all_links[track_index + 1]
+                                if 'trackName' not in artist_link.get('class', []) and 'trackTitle' not in artist_link.get('class', []):
+                                    artist_name = artist_link.get_text(strip=True)
+                        except ValueError:
+                            pass
+
+            track_info = {
+                "track": track_name,
+                "artist": artist_name,
+                "url": track_url,
+                "youtube_url": None
+            }
+
+            # Get YouTube link from track page
+            if track_url:
+                try:
+                    html = await self._fetch_page(track_url)
+                    soup = BeautifulSoup(html, 'lxml')
+                    youtube_link = soup.select_one('a[href*="youtube.com"], a[href*="youtu.be"]')
+                    if youtube_link:
+                        track_info["youtube_url"] = youtube_link.get('href', '')
+                except Exception as e:
+                    print(f"Error fetching YouTube link for {track_url}: {e}")
+
+            return track_info
+
+        except Exception as e:
+            print(f"Error extracting track with YouTube: {e}")
+            return None
+
     async def get_track_details(self, track_url: str, include_youtube: bool = False) -> Dict:
         """
         Get detailed information about a track.
@@ -247,30 +420,35 @@ class WhoSampledScraper:
             track_href = track_link.get('href', '')
             track_url = self.BASE_URL + track_href if track_href else ""
 
-            # Find artist - it's usually the next <a> tag after the track link
+            # Find artist - check for span.trackArtist first, then <a> tag
             artist_name = "Unknown"
 
-            # Try to find the next sibling <a> tag
-            next_link = track_link.find_next_sibling('a')
-            if next_link:
-                # Make sure it's not another track link
-                if 'trackName' not in next_link.get('class', []):
-                    artist_name = next_link.get_text(strip=True)
+            # First, try to find span.trackArtist (common in test fixtures and some WhoSampled pages)
+            artist_span = track_link.find_next_sibling('span', class_='trackArtist')
+            if artist_span:
+                artist_name = artist_span.get_text(strip=True)
             else:
-                # If no sibling, look in the parent's children
-                parent = track_link.parent
-                if parent:
-                    all_links = parent.find_all('a')
-                    # Find the position of track_link
-                    try:
-                        track_index = all_links.index(track_link)
-                        # Get the next link if it exists
-                        if track_index + 1 < len(all_links):
-                            artist_link = all_links[track_index + 1]
-                            if 'trackName' not in artist_link.get('class', []):
-                                artist_name = artist_link.get_text(strip=True)
-                    except ValueError:
-                        pass
+                # Try to find the next sibling <a> tag
+                next_link = track_link.find_next_sibling('a')
+                if next_link:
+                    # Make sure it's not another track link
+                    if 'trackName' not in next_link.get('class', []):
+                        artist_name = next_link.get_text(strip=True)
+                else:
+                    # If no sibling, look in the parent's children
+                    parent = track_link.parent
+                    if parent:
+                        all_links = parent.find_all('a')
+                        # Find the position of track_link
+                        try:
+                            track_index = all_links.index(track_link)
+                            # Get the next link if it exists
+                            if track_index + 1 < len(all_links):
+                                artist_link = all_links[track_index + 1]
+                                if 'trackName' not in artist_link.get('class', []):
+                                    artist_name = artist_link.get_text(strip=True)
+                        except ValueError:
+                            pass
 
             connection = {
                 "track": track_name,
