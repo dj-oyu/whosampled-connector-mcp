@@ -280,3 +280,176 @@ def test_format_track_details_with_error():
 
     assert "Error" in result
     assert "HTTP error occurred" in result
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_tool_success():
+    """Test get_youtube_links tool with successful result."""
+    mock_result = {
+        "query": "Daft Punk One More Time",
+        "top_hit": [
+            {
+                "track": "One More Time",
+                "artist": "Daft Punk",
+                "url": "https://www.whosampled.com/Daft-Punk/One-More-Time/",
+                "youtube_url": "https://www.youtube.com/watch?v=test123"
+            }
+        ],
+        "connections": [
+            {
+                "track": "Connection Track",
+                "artist": "Connection Artist",
+                "url": "https://www.whosampled.com/Connection/Track/",
+                "youtube_url": "https://www.youtube.com/watch?v=connection"
+            }
+        ],
+        "tracks": [
+            {
+                "track": "Related Track",
+                "artist": "Related Artist",
+                "url": "https://www.whosampled.com/Related/Track/",
+                "youtube_url": None
+            }
+        ]
+    }
+
+    with patch('whosampled_connector.server.scraper.get_youtube_links_from_search', new_callable=AsyncMock) as mock_get:
+        mock_get.return_value = mock_result
+
+        result = await call_tool("get_youtube_links", {
+            "artist": "Daft Punk",
+            "track": "One More Time",
+            "max_per_section": 3
+        })
+
+        assert len(result) == 1
+        assert result[0].type == "text"
+        text = result[0].text
+        assert "TOP HIT" in text
+        assert "One More Time" in text
+        assert "youtube.com/watch?v=test123" in text
+        assert "CONNECTIONS" in text
+        assert "Connection Track" in text
+        assert "TRACKS" in text
+        assert "Related Track" in text
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_tool_missing_params():
+    """Test get_youtube_links tool with missing parameters."""
+    # Missing track
+    result = await call_tool("get_youtube_links", {"artist": "Daft Punk"})
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    assert "Error" in result[0].text
+    assert "required" in result[0].text
+
+    # Missing artist
+    result = await call_tool("get_youtube_links", {"track": "One More Time"})
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    assert "Error" in result[0].text
+    assert "required" in result[0].text
+
+
+@pytest.mark.asyncio
+async def test_get_youtube_links_tool_with_custom_max():
+    """Test get_youtube_links tool with custom max_per_section."""
+    mock_result = {
+        "query": "Test Query",
+        "top_hit": [],
+        "connections": [],
+        "tracks": []
+    }
+
+    with patch('whosampled_connector.server.scraper.get_youtube_links_from_search', new_callable=AsyncMock) as mock_get:
+        mock_get.return_value = mock_result
+
+        result = await call_tool("get_youtube_links", {
+            "artist": "Artist",
+            "track": "Track",
+            "max_per_section": 5
+        })
+
+        # Verify the method was called with correct max_per_section
+        mock_get.assert_called_once_with("Artist", "Track", 5)
+        assert len(result) == 1
+
+
+def test_format_youtube_links_with_all_sections():
+    """Test formatting YouTube links with all sections."""
+    from whosampled_connector.server import _format_youtube_links
+
+    result_data = {
+        "query": "Daft Punk One More Time",
+        "top_hit": [
+            {
+                "track": "One More Time",
+                "artist": "Daft Punk",
+                "url": "https://www.whosampled.com/test1/",
+                "youtube_url": "https://www.youtube.com/watch?v=1"
+            }
+        ],
+        "connections": [
+            {
+                "track": "Connection",
+                "artist": "Artist",
+                "url": "https://www.whosampled.com/test2/",
+                "youtube_url": "https://www.youtube.com/watch?v=2"
+            }
+        ],
+        "tracks": [
+            {
+                "track": "Track",
+                "artist": "Artist",
+                "url": "https://www.whosampled.com/test3/",
+                "youtube_url": None
+            }
+        ]
+    }
+
+    result = _format_youtube_links(result_data)
+
+    assert "Daft Punk One More Time" in result
+    assert "TOP HIT" in result
+    assert "One More Time" in result
+    assert "youtube.com/watch?v=1" in result
+    assert "CONNECTIONS" in result
+    assert "Connection" in result
+    assert "TRACKS" in result
+    assert "Not found" in result  # For the track without YouTube link
+
+
+def test_format_youtube_links_empty():
+    """Test formatting YouTube links with no results."""
+    from whosampled_connector.server import _format_youtube_links
+
+    result_data = {
+        "query": "Unknown Track",
+        "top_hit": [],
+        "connections": [],
+        "tracks": []
+    }
+
+    result = _format_youtube_links(result_data)
+
+    assert "Unknown Track" in result
+    assert "No tracks found" in result
+
+
+def test_format_youtube_links_with_error():
+    """Test formatting YouTube links with error."""
+    from whosampled_connector.server import _format_youtube_links
+
+    result_data = {
+        "error": "Network error occurred",
+        "query": "Test"
+    }
+
+    result = _format_youtube_links(result_data)
+
+    assert "Error" in result
+    assert "Network error occurred" in result
+
