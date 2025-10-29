@@ -57,42 +57,48 @@ def mock_track_details_html():
             <h1 class="trackName">Harder, Better, Faster, Stronger</h1>
             <a href="https://www.youtube.com/watch?v=test123">YouTube</a>
 
-            <section id="samples">
+            <section class="subsection" id="samples">
+                <h3>Contains samples</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Cola-Bottle-Baby/">Cola Bottle Baby</a>
                     <span class="trackArtist">Edwin Birdsong</span>
                 </div>
             </section>
 
-            <section id="was-sampled">
+            <section class="subsection" id="was-sampled">
+                <h3>Was sampled in</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Kanye-West/Stronger/">Stronger</a>
                     <span class="trackArtist">Kanye West</span>
                 </div>
             </section>
 
-            <section id="covers">
+            <section class="subsection" id="covers">
+                <h3>Cover of</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Some-Cover/">Cover Version</a>
                     <span class="trackArtist">Cover Artist</span>
                 </div>
             </section>
 
-            <section id="was-covered">
+            <section class="subsection" id="was-covered">
+                <h3>Covered by</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Another-Cover/">Another Cover</a>
                     <span class="trackArtist">Another Artist</span>
                 </div>
             </section>
 
-            <section id="remixes">
+            <section class="subsection" id="remixes">
+                <h3>Remix of</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Some-Remix/">Remix Version</a>
                     <span class="trackArtist">Remix Artist</span>
                 </div>
             </section>
 
-            <section id="was-remixed">
+            <section class="subsection" id="was-remixed">
+                <h3>Remixed by</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Another-Remix/">Another Remix</a>
                     <span class="trackArtist">Remixer</span>

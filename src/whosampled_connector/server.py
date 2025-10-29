@@ -81,6 +81,31 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["url"]
             }
+        ),
+        Tool(
+            name="get_youtube_links",
+            description="Get YouTube links from search results with priority: Top Hit > Connections > Tracks. Returns up to 3 tracks per section.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artist": {
+                        "type": "string",
+                        "description": "Artist name"
+                    },
+                    "track": {
+                        "type": "string",
+                        "description": "Track/song name"
+                    },
+                    "max_per_section": {
+                        "type": "integer",
+                        "description": "Maximum number of tracks to get from each section (default: 3)",
+                        "default": 3,
+                        "minimum": 1,
+                        "maximum": 10
+                    }
+                },
+                "required": ["artist", "track"]
+            }
         )
     ]
 
@@ -147,17 +172,32 @@ Use get_track_samples or get_track_details_by_url to get detailed information ab
     elif name == "get_track_details_by_url":
         url = arguments.get("url", "")
         include_youtube = arguments.get("include_youtube", False)
-        
+
         if not url:
             return [TextContent(
                 type="text",
                 text="Error: URL is required"
             )]
-        
+
         details = await scraper.get_track_details(url, include_youtube)
-        
+
         return [TextContent(type="text", text=_format_track_details(details))]
-    
+
+    elif name == "get_youtube_links":
+        artist = arguments.get("artist", "")
+        track = arguments.get("track", "")
+        max_per_section = arguments.get("max_per_section", 3)
+
+        if not artist or not track:
+            return [TextContent(
+                type="text",
+                text="Error: Both artist and track name are required"
+            )]
+
+        result = await scraper.get_youtube_links_from_search(artist, track, max_per_section)
+
+        return [TextContent(type="text", text=_format_youtube_links(result))]
+
     else:
         return [TextContent(
             type="text",
@@ -165,9 +205,63 @@ Use get_track_samples or get_track_details_by_url to get detailed information ab
         )]
 
 
+def _format_youtube_links(result: dict) -> str:
+    """Format YouTube links result into a readable string."""
+
+    if "error" in result:
+        return f"Error retrieving YouTube links: {result['error']}"
+
+    lines = []
+    lines.append(f"Search query: {result.get('query', 'N/A')}")
+    lines.append("")
+
+    # Top Hit section (highest priority)
+    if result.get("top_hit"):
+        lines.append("=== TOP HIT ===")
+        for track in result["top_hit"]:
+            lines.append(f"  • {track['track']} by {track['artist']}")
+            lines.append(f"    WhoSampled: {track['url']}")
+            if track.get("youtube_url"):
+                lines.append(f"    YouTube: {track['youtube_url']}")
+            else:
+                lines.append("    YouTube: Not found")
+        lines.append("")
+
+    # Connections section
+    if result.get("connections"):
+        lines.append("=== CONNECTIONS ===")
+        for track in result["connections"]:
+            lines.append(f"  • {track['track']} by {track['artist']}")
+            lines.append(f"    WhoSampled: {track['url']}")
+            if track.get("youtube_url"):
+                lines.append(f"    YouTube: {track['youtube_url']}")
+            else:
+                lines.append("    YouTube: Not found")
+        lines.append("")
+
+    # Tracks section
+    if result.get("tracks"):
+        lines.append("=== TRACKS ===")
+        for track in result["tracks"]:
+            lines.append(f"  • {track['track']} by {track['artist']}")
+            lines.append(f"    WhoSampled: {track['url']}")
+            if track.get("youtube_url"):
+                lines.append(f"    YouTube: {track['youtube_url']}")
+            else:
+                lines.append("    YouTube: Not found")
+        lines.append("")
+
+    # Check if we have any content
+    has_content = result.get("top_hit") or result.get("connections") or result.get("tracks")
+    if not has_content:
+        lines.append("No tracks found with YouTube links.")
+
+    return "\n".join(lines)
+
+
 def _format_track_details(details: dict) -> str:
     """Format track details into a readable string."""
-    
+
     if "error" in details:
         return f"Error retrieving track details: {details['error']}"
     
