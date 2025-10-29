@@ -128,21 +128,22 @@ async def test_extract_connections():
     scraper = WhoSampledScraper()
 
     html = """
-    <section id="samples">
+    <section class="subsection">
+        <h3>Contains sample of 2 songs</h3>
         <div class="trackItem">
             <a class="trackName" href="/Sample-1/">Sample Track 1</a>
-            <span class="trackArtist">Artist 1</span>
+            <a href="/Artist-1/">Artist 1</a>
         </div>
         <div class="trackItem">
             <a class="trackName" href="/Sample-2/">Sample Track 2</a>
-            <span class="trackArtist">Artist 2</span>
+            <a href="/Artist-2/">Artist 2</a>
         </div>
     </section>
     """
 
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, 'lxml')
-    section = soup.find('section', {'id': 'samples'})
+    section = soup.find('section', {'class': 'subsection'})
 
     connections = scraper._extract_connections(section)
 
