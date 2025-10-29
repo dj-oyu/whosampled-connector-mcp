@@ -1,6 +1,7 @@
 """
 Entry point for running the WhoSampled MCP server.
 """
+
 import asyncio
 from .server import main
 
