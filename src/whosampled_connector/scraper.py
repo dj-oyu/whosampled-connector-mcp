@@ -5,6 +5,7 @@ from playwright.async_api import async_playwright, Browser, Page
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 import urllib.parse
+import os
 
 
 class WhoSampledScraper:
@@ -22,8 +23,16 @@ class WhoSampledScraper:
         """Ensure browser is initialized."""
         if not self._initialized:
             self.playwright = await async_playwright().start()
+
+            # Get proxy from environment variables if available
+            proxy_config = None
+            https_proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+            if https_proxy:
+                proxy_config = {"server": https_proxy}
+
             self.browser = await self.playwright.chromium.launch(
                 headless=True,
+                proxy=proxy_config,
                 args=[
                     '--disable-blink-features=AutomationControlled',
                     '--disable-features=IsolateOrigins,site-per-process',

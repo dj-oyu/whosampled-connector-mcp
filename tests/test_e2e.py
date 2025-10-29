@@ -46,9 +46,11 @@ async def test_integration_direct_url_lookup():
     })
 
     assert len(result) == 1
-    assert "One More Time" in result[0].text
-    # Should have YouTube link
-    assert "YouTube" in result[0].text or "youtube.com" in result[0].text
+    text = result[0].text
+    assert "One More Time" in text
+    # Should have YouTube link with proper format: youtube.com/watch?v=...
+    assert "youtube.com/watch" in text.lower() or "youtu.be/" in text.lower()
+    assert "v=" in text or "youtu.be/" in text.lower()
 
 
 @pytest.mark.asyncio
@@ -108,8 +110,10 @@ async def test_integration_with_youtube_links():
     })
 
     assert len(result) == 1
-    # Most popular tracks have YouTube links
-    assert "YouTube" in result[0].text or "youtube.com" in result[0].text
+    text = result[0].text
+    # Most popular tracks have YouTube links with proper format
+    assert "youtube.com/watch" in text.lower() or "youtu.be/" in text.lower()
+    assert "v=" in text or "youtu.be/" in text.lower()
 
 
 @pytest.mark.asyncio
@@ -170,8 +174,10 @@ async def test_integration_get_youtube_links():
     # Should have WhoSampled URLs
     assert "whosampled.com" in text
 
-    # Most popular tracks should have at least one YouTube link
-    assert "youtube.com" in text.lower() or "youtu.be" in text.lower()
+    # Most popular tracks should have at least one YouTube link with proper format
+    # Check for youtube.com/watch?v= or youtu.be/ format
+    assert "youtube.com/watch" in text.lower() or "youtu.be/" in text.lower()
+    assert "v=" in text or "youtu.be/" in text.lower()
 
 
 @pytest.mark.asyncio

@@ -64,7 +64,10 @@ async def test_get_track_details_with_youtube(scraper, mock_track_details_html):
 
         assert result is not None
         assert "youtube_url" in result
-        assert "youtube.com" in result["youtube_url"]
+        # Verify proper YouTube URL format: youtube.com/watch?v=... or youtu.be/...
+        youtube_url = result["youtube_url"]
+        assert "youtube.com/watch" in youtube_url or "youtu.be/" in youtube_url
+        assert "v=" in youtube_url or "youtu.be/" in youtube_url
 
 
 @pytest.mark.asyncio
@@ -200,6 +203,15 @@ async def test_get_youtube_links_from_search(scraper):
         assert "connections" in result
         assert "tracks" in result
 
+        # Verify YouTube links have proper format
+        for section in ["top_hit", "connections", "tracks"]:
+            for track in result[section]:
+                if track.get("youtube_url"):
+                    youtube_url = track["youtube_url"]
+                    # Should be proper YouTube URL format
+                    assert "youtube.com/watch" in youtube_url or "youtu.be/" in youtube_url
+                    assert "v=" in youtube_url or "youtu.be/" in youtube_url
+
 
 @pytest.mark.asyncio
 async def test_get_youtube_links_from_search_no_results(scraper):
@@ -263,6 +275,9 @@ async def test_extract_single_track_with_youtube(scraper):
         assert result["artist"] == "Test Artist"
         assert result["url"] == "https://www.whosampled.com/Test/Track/"
         assert result["youtube_url"] == "https://www.youtube.com/watch?v=abc123"
+        # Verify proper YouTube URL format
+        assert "youtube.com/watch" in result["youtube_url"]
+        assert "v=" in result["youtube_url"]
 
 
 @pytest.mark.asyncio
