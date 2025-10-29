@@ -196,35 +196,30 @@ class WhoSampledScraper:
                 if youtube_link:
                     result["youtube_url"] = youtube_link.get('href', '')
 
-            # Extract samples (tracks this song sampled)
-            samples_section = soup.find('section', {'id': 'samples'})
-            if samples_section:
-                result["samples"] = self._extract_connections(samples_section)
+            # Find all subsections (WhoSampled uses section.subsection with headers)
+            subsections = soup.select('section.subsection')
 
-            # Extract sampled by (tracks that sampled this song)
-            sampled_by_section = soup.find('section', {'id': 'was-sampled'})
-            if sampled_by_section:
-                result["sampled_by"] = self._extract_connections(sampled_by_section)
+            for subsection in subsections:
+                # Get the header to determine the type of connection
+                header = subsection.find(['h2', 'h3', 'h4'])
+                if not header:
+                    continue
 
-            # Extract covers
-            covers_section = soup.find('section', {'id': 'covers'})
-            if covers_section:
-                result["covers"] = self._extract_connections(covers_section)
+                header_text = header.get_text(strip=True).lower()
 
-            # Extract covered by
-            covered_by_section = soup.find('section', {'id': 'was-covered'})
-            if covered_by_section:
-                result["covered_by"] = self._extract_connections(covered_by_section)
-
-            # Extract remixes
-            remixes_section = soup.find('section', {'id': 'remixes'})
-            if remixes_section:
-                result["remixes"] = self._extract_connections(remixes_section)
-
-            # Extract remixed by
-            remixed_by_section = soup.find('section', {'id': 'was-remixed'})
-            if remixed_by_section:
-                result["remixed_by"] = self._extract_connections(remixed_by_section)
+                # Determine connection type based on header text
+                if 'contains sample' in header_text or ('sampled' in header_text and 'sampled in' not in header_text):
+                    result["samples"] = self._extract_connections(subsection)
+                elif 'sampled in' in header_text:
+                    result["sampled_by"] = self._extract_connections(subsection)
+                elif 'cover of' in header_text:
+                    result["covers"] = self._extract_connections(subsection)
+                elif 'covered in' in header_text or 'covered by' in header_text:
+                    result["covered_by"] = self._extract_connections(subsection)
+                elif 'remix of' in header_text:
+                    result["remixes"] = self._extract_connections(subsection)
+                elif 'remixed in' in header_text or 'remixed by' in header_text:
+                    result["remixed_by"] = self._extract_connections(subsection)
 
             return result
 
@@ -244,21 +239,38 @@ class WhoSampledScraper:
         """
         connections = []
 
-        # Look for track entries in the section
-        entries = section.select('.trackItem, .sampleEntry, .coverEntry, .remixEntry, li')
+        # Find all track links (a.trackName elements)
+        track_links = section.select('a.trackName')
 
-        for entry in entries:
-            # Try to find track link and artist
-            track_link = entry.select_one('a.trackName, a[href*="/sample/"]')
-            if not track_link:
-                continue
-
+        for track_link in track_links:
             track_name = track_link.get_text(strip=True)
-            track_url = self.BASE_URL + track_link.get('href', '')
+            track_href = track_link.get('href', '')
+            track_url = self.BASE_URL + track_href if track_href else ""
 
-            # Try to find artist
-            artist_elem = entry.select_one('.trackArtist, .artistName')
-            artist_name = artist_elem.get_text(strip=True) if artist_elem else "Unknown"
+            # Find artist - it's usually the next <a> tag after the track link
+            artist_name = "Unknown"
+
+            # Try to find the next sibling <a> tag
+            next_link = track_link.find_next_sibling('a')
+            if next_link:
+                # Make sure it's not another track link
+                if 'trackName' not in next_link.get('class', []):
+                    artist_name = next_link.get_text(strip=True)
+            else:
+                # If no sibling, look in the parent's children
+                parent = track_link.parent
+                if parent:
+                    all_links = parent.find_all('a')
+                    # Find the position of track_link
+                    try:
+                        track_index = all_links.index(track_link)
+                        # Get the next link if it exists
+                        if track_index + 1 < len(all_links):
+                            artist_link = all_links[track_index + 1]
+                            if 'trackName' not in artist_link.get('class', []):
+                                artist_name = artist_link.get_text(strip=True)
+                    except ValueError:
+                        pass
 
             connection = {
                 "track": track_name,
