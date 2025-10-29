@@ -3,6 +3,25 @@ import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 from whosampled_connector.scraper import WhoSampledScraper
+import socket
+
+
+def check_internet_connection():
+    """Check if internet connection is available."""
+    try:
+        # Try to resolve whosampled.com
+        socket.gethostbyname('www.whosampled.com')
+        return True
+    except (socket.gaierror, socket.error):
+        return False
+
+
+@pytest.fixture(scope="function", autouse=True)
+def skip_if_no_internet(request):
+    """Skip integration tests if no internet connection is available."""
+    if "integration" in request.keywords:
+        if not check_internet_connection():
+            pytest.skip("Integration test requires internet connection to whosampled.com")
 
 
 @pytest_asyncio.fixture
