@@ -306,37 +306,7 @@ class WhoSampledScraper:
             track_name = track_link.get_text(strip=True)
             track_href = track_link.get("href", "")
             track_url = self.BASE_URL + track_href if track_href else ""
-
-            # Extract artist name - check for span.trackArtist first, then <a> tag
-            artist_name = "Unknown"
-
-            # First, try to find span.trackArtist
-            artist_span = track_link.find_next_sibling("span", class_="trackArtist")
-            if artist_span:
-                artist_name = artist_span.get_text(strip=True)
-            else:
-                # Try to find the next sibling <a> tag
-                next_link = track_link.find_next_sibling("a")
-                if (
-                    next_link
-                    and "trackName" not in next_link.get("class", [])
-                    and "trackTitle" not in next_link.get("class", [])
-                ):
-                    artist_name = next_link.get_text(strip=True)
-                else:
-                    parent = track_link.parent
-                    if parent:
-                        all_links = parent.find_all("a")
-                        try:
-                            track_index = all_links.index(track_link)
-                            if track_index + 1 < len(all_links):
-                                artist_link = all_links[track_index + 1]
-                                if "trackName" not in artist_link.get(
-                                    "class", []
-                                ) and "trackTitle" not in artist_link.get("class", []):
-                                    artist_name = artist_link.get_text(strip=True)
-                        except ValueError:
-                            pass
+            artist_name = self._extract_artist_name(track_link)
 
             track_info = {
                 "track": track_name,
@@ -444,6 +414,33 @@ class WhoSampledScraper:
             print(f"Error getting track details: {e}")
             return {"error": str(e), "url": track_url}
 
+    def _extract_artist_name(self, track_link) -> str:
+        """
+        Extract artist name from a track link element.
+
+        Args:
+            track_link: BeautifulSoup track link element
+
+        Returns:
+            Artist name or "Unknown" if not found
+        """
+        # Try span.trackArtist first
+        artist_span = track_link.find_next_sibling("span", class_="trackArtist")
+        if artist_span:
+            return artist_span.get_text(strip=True)
+
+        # Try next sibling links (skip track links)
+        for sibling in track_link.find_next_siblings():
+            if sibling.name == "a":
+                classes = sibling.get("class", [])
+                if "trackName" not in classes and "trackTitle" not in classes:
+                    return sibling.get_text(strip=True)
+            # Stop if we hit a non-link element (likely moved to next section)
+            if sibling.name not in ["a", "span"]:
+                break
+
+        return "Unknown"
+
     def _extract_connections(self, section) -> List[Dict]:
         """
         Extract track connections (samples, covers, remixes) from a section.
@@ -463,39 +460,9 @@ class WhoSampledScraper:
             track_name = track_link.get_text(strip=True)
             track_href = track_link.get("href", "")
             track_url = self.BASE_URL + track_href if track_href else ""
-
-            # Find artist - check for span.trackArtist first, then <a> tag
-            artist_name = "Unknown"
-
-            # First, try to find span.trackArtist (common in test fixtures and some WhoSampled pages)
-            artist_span = track_link.find_next_sibling("span", class_="trackArtist")
-            if artist_span:
-                artist_name = artist_span.get_text(strip=True)
-            else:
-                # Try to find the next sibling <a> tag
-                next_link = track_link.find_next_sibling("a")
-                if next_link:
-                    # Make sure it's not another track link
-                    if "trackName" not in next_link.get("class", []):
-                        artist_name = next_link.get_text(strip=True)
-                else:
-                    # If no sibling, look in the parent's children
-                    parent = track_link.parent
-                    if parent:
-                        all_links = parent.find_all("a")
-                        # Find the position of track_link
-                        try:
-                            track_index = all_links.index(track_link)
-                            # Get the next link if it exists
-                            if track_index + 1 < len(all_links):
-                                artist_link = all_links[track_index + 1]
-                                if "trackName" not in artist_link.get("class", []):
-                                    artist_name = artist_link.get_text(strip=True)
-                        except ValueError:
-                            pass
+            artist_name = self._extract_artist_name(track_link)
 
             connection = {"track": track_name, "artist": artist_name, "url": track_url}
-
             connections.append(connection)
 
         return connections
