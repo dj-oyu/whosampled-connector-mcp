@@ -50,7 +50,7 @@ def mock_search_html():
 
 @pytest.fixture
 def mock_track_details_html():
-    """Mock HTML response for track details page."""
+    """Mock HTML response for track details page with new WhoSampled structure."""
     return """
     <html>
         <body>
@@ -61,7 +61,7 @@ def mock_track_details_html():
                 <h3>Contains samples</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Cola-Bottle-Baby/">Cola Bottle Baby</a>
-                    <span class="trackArtist">Edwin Birdsong</span>
+                    <a href="/Edwin-Birdsong/">Edwin Birdsong</a>
                 </div>
             </section>
 
@@ -69,7 +69,7 @@ def mock_track_details_html():
                 <h3>Was sampled in</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Kanye-West/Stronger/">Stronger</a>
-                    <span class="trackArtist">Kanye West</span>
+                    <a href="/Kanye-West/">Kanye West</a>
                 </div>
             </section>
 
@@ -77,7 +77,7 @@ def mock_track_details_html():
                 <h3>Cover of</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Some-Cover/">Cover Version</a>
-                    <span class="trackArtist">Cover Artist</span>
+                    <a href="/Cover-Artist/">Cover Artist</a>
                 </div>
             </section>
 
@@ -85,7 +85,7 @@ def mock_track_details_html():
                 <h3>Covered by</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Another-Cover/">Another Cover</a>
-                    <span class="trackArtist">Another Artist</span>
+                    <a href="/Another-Artist/">Another Artist</a>
                 </div>
             </section>
 
@@ -93,7 +93,7 @@ def mock_track_details_html():
                 <h3>Remix of</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Some-Remix/">Remix Version</a>
-                    <span class="trackArtist">Remix Artist</span>
+                    <a href="/Remix-Artist/">Remix Artist</a>
                 </div>
             </section>
 
@@ -101,7 +101,7 @@ def mock_track_details_html():
                 <h3>Remixed by</h3>
                 <div class="trackItem">
                     <a class="trackName" href="/Another-Remix/">Another Remix</a>
-                    <span class="trackArtist">Remixer</span>
+                    <a href="/Remixer/">Remixer</a>
                 </div>
             </section>
         </body>
