@@ -9,11 +9,12 @@ async def test_list_tools():
     """Test that all tools are listed."""
     tools = await list_tools()
 
-    assert len(tools) == 3
+    assert len(tools) == 4
     tool_names = [tool.name for tool in tools]
     assert "search_track" in tool_names
     assert "get_track_samples" in tool_names
     assert "get_track_details_by_url" in tool_names
+    assert "get_youtube_links" in tool_names
 
 
 @pytest.mark.asyncio
