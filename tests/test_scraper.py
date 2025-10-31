@@ -436,3 +436,53 @@ async def test_extract_artist_name_with_url_fallback():
     assert artist_name == "Knxwledge"
 
     await scraper.aclose()
+
+
+@pytest.mark.asyncio
+async def test_extract_artist_name_multiple_artists():
+    """Test artist name extraction with multiple artists."""
+    scraper = WhoSampledScraper()
+    from bs4 import BeautifulSoup
+
+    # Test case: multiple artists in trackArtist span
+    html = """
+    <span class="trackDetails">
+        <a class="trackName" href="/Track/">Track Name</a>
+        <span class="trackArtist">by <a href="/Artist-1/">Yuki Chiba</a>, <a href="/Artist-2/">Young Coco</a> and <a href="/Artist-3/">Jin Dogg</a> (2024)</span>
+    </span>
+    """
+
+    soup = BeautifulSoup(html, "lxml")
+    track_link = soup.select_one("a.trackName")
+
+    artist_name = scraper._extract_artist_name(track_link)
+
+    # Should extract all artists
+    assert artist_name == "Yuki Chiba, Young Coco, Jin Dogg"
+
+    await scraper.aclose()
+
+
+@pytest.mark.asyncio
+async def test_extract_artist_name_single_artist():
+    """Test artist name extraction with single artist."""
+    scraper = WhoSampledScraper()
+    from bs4 import BeautifulSoup
+
+    # Test case: single artist in trackArtist span
+    html = """
+    <span class="trackDetails">
+        <a class="trackName" href="/Track/">Track Name</a>
+        <span class="trackArtist">by <a href="/Artist/">Hololive English -Advent-</a></span>
+    </span>
+    """
+
+    soup = BeautifulSoup(html, "lxml")
+    track_link = soup.select_one("a.trackName")
+
+    artist_name = scraper._extract_artist_name(track_link)
+
+    # Should extract artist name
+    assert artist_name == "Hololive English -Advent-"
+
+    await scraper.aclose()

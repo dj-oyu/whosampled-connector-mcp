@@ -425,12 +425,31 @@ class WhoSampledScraper:
         Returns:
             Artist name or "Unknown" if not found
         """
-        # Try span.trackArtist first
+        # Strategy 1: Try span.trackArtist (most reliable for WhoSampled structure)
         artist_span = track_link.find_next_sibling("span", class_="trackArtist")
         if artist_span:
-            return artist_span.get_text(strip=True)
+            # Extract artist names from links within the span
+            # WhoSampled uses: <span class="trackArtist">by <a href="...">Artist</a>, <a href="...">Artist2</a> and <a href="...">Artist3</a></span>
+            artist_links = artist_span.find_all("a")
+            if artist_links:
+                # Get all artist names and join them
+                artist_names = [link.get_text(strip=True) for link in artist_links]
+                if artist_names:
+                    # Join multiple artists with comma
+                    return ", ".join(artist_names)
 
-        # Try next sibling links (skip track links)
+            # Fallback: get text from span (includes "by " prefix)
+            text = artist_span.get_text(strip=True)
+            # Remove "by " prefix if present
+            if text.startswith("by "):
+                text = text[3:].strip()
+            # Remove year suffix like " (2024)"
+            import re
+            text = re.sub(r'\s*\(\d{4}\)$', '', text)
+            if text:
+                return text
+
+        # Strategy 2: Try next sibling links (skip track links)
         for sibling in track_link.find_next_siblings():
             if sibling.name == "a":
                 classes = sibling.get("class", [])
@@ -440,7 +459,7 @@ class WhoSampledScraper:
             if sibling.name not in ["a", "span"]:
                 break
 
-        # Fallback: try to extract from URL
+        # Strategy 3: Fallback to URL extraction
         # URLs like: /sample/ID/Artist-Name-Track-Name-Original-Artist-Original-Track/
         # or: /cover/ID/Artist-Name-Track-Name/
         track_url = track_link.get("href", "")
