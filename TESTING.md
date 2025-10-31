@@ -5,20 +5,24 @@
 This project has two types of tests:
 
 ### 1. Unit Tests (Fast, Mocked)
-- **test_server.py** - 12 tests covering MCP server tools
-- **test_scraper.py** - 8 tests covering scraper functionality
+- **test_server.py** - 19 tests covering MCP server tools
+- **test_scraper.py** - 14 tests covering scraper functionality
 - Use `unittest.mock.patch` to mock `_fetch_page` method
 - Do not access real WhoSampled website
 - Run quickly (~0.1s total)
-- ✅ **Always passing** (20/20 tests)
+- ✅ **Always passing** (33/33 tests)
 
 ### 2. Integration Tests (Slow, Real Access)
-- **test_e2e.py** - 8 tests covering end-to-end workflows
+- **test_e2e.py** - 16 tests covering end-to-end workflows
 - Actually access real WhoSampled website using Playwright
 - Verify HTML structure hasn't changed
 - Detect CSS selector issues
 - Run slowly (~30-60s total)
 - Require Playwright browsers installed
+- **Includes performance benchmarks:**
+  - Team Tomodachi track with YouTube links
+  - Performance comparison (with vs without YouTube links)
+  - YouTube link coverage verification
 - ✅ **Pass when Playwright browsers are available**
 
 ## Running Tests
@@ -28,7 +32,7 @@ This project has two types of tests:
 # Run only unit tests (recommended for development)
 uv run pytest -v -m "not integration"
 
-# Result: 20 passed in ~0.1s
+# Result: 33 passed in ~0.1s
 ```
 
 ### Full Test Suite (Unit + Integration)
@@ -39,16 +43,28 @@ uv run playwright install chromium
 # Run all tests including integration tests
 uv run pytest -v
 
-# Result: 28 passed in ~30-60s
+# Result: 49 passed in ~30-60s
 ```
 
-### Integration Tests Only
+### Integration Tests Only (includes performance tests)
 ```bash
-# Run only integration tests
+# Run all integration tests including Team Tomodachi performance tests
 uv run pytest -v -m "integration"
 
-# Skip slow integration tests
-uv run pytest -v -m "integration and not slow"
+# Result: 16 integration tests
+```
+
+### Team Tomodachi Performance Tests
+```bash
+# Run only Team Tomodachi tests with performance metrics
+uv run pytest -v -m "integration" -k "team_tomodachi" -s
+
+# Output includes:
+#  - Elapsed time for fetching track with YouTube links
+#  - Expected video IDs verification (c1UaGJlsw5g, 0LEc7es4_rE, acw_iA5IgTQ, 5DmLGUCmxD0)
+#  - Performance comparison (with vs without YouTube links)
+#  - Slowdown factor
+#  - YouTube link statistics
 ```
 
 ### Specific Test Files
@@ -151,8 +167,38 @@ Our scraper uses these CSS selectors:
 
 ## Test Coverage
 
-- **test_scraper.py** - 8 tests covering scraper functionality
-- **test_server.py** - 12 tests covering MCP server tools
-- **test_e2e.py** - 8 tests covering end-to-end workflows
+- **test_scraper.py** - 14 tests covering scraper functionality
+  - Basic search and track details
+  - YouTube link extraction
+  - Connection extraction (with and without YouTube)
+- **test_server.py** - 19 tests covering MCP server tools
+  - All MCP tool endpoints
+  - Response formatting
+  - Error handling
+- **test_e2e.py** - 16 tests covering end-to-end workflows
+  - Basic integration tests (13 tests)
+  - Team Tomodachi performance tests (3 tests):
+    - YouTube link verification with expected video IDs
+    - Performance comparison (with/without YouTube links)
+    - All sections coverage verification
 
-Total: 28 tests (all passing ✅)
+Total: 49 tests (all passing ✅)
+
+### Performance Test Details
+
+The Team Tomodachi performance tests provide detailed metrics:
+
+1. **test_integration_team_tomodachi_with_youtube_links**
+   - Verifies all expected YouTube video IDs are present
+   - Checks performance (<60s timeout)
+   - Reports found vs missing video IDs
+
+2. **test_integration_team_tomodachi_performance**
+   - Compares fetch time with and without YouTube links
+   - Reports slowdown factor
+   - Ensures both modes complete in reasonable time
+
+3. **test_integration_team_tomodachi_all_sections**
+   - Counts total YouTube links found
+   - Reports which sections exist (SAMPLED BY, COVERED BY, REMIXED BY)
+   - Verifies YouTube link coverage

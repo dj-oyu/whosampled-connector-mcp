@@ -166,6 +166,65 @@ async def test_extract_connections():
 
 
 @pytest.mark.asyncio
+async def test_extract_connections_with_youtube():
+    """Test the _extract_connections_with_youtube method."""
+    scraper = WhoSampledScraper()
+
+    html = """
+    <section class="subsection">
+        <h3>Contains sample of 2 songs</h3>
+        <div class="trackItem">
+            <a class="trackName" href="/Sample-1/">Sample Track 1</a>
+            <a href="/Artist-1/">Artist 1</a>
+        </div>
+        <div class="trackItem">
+            <a class="trackName" href="/Sample-2/">Sample Track 2</a>
+            <a href="/Artist-2/">Artist 2</a>
+        </div>
+    </section>
+    """
+
+    track_page_with_youtube = """
+    <html>
+        <body>
+            <div class="embed-placeholder youtube-placeholder" data-id="abc123"></div>
+        </body>
+    </html>
+    """
+
+    track_page_without_youtube = """
+    <html>
+        <body>
+            <p>No YouTube link here</p>
+        </body>
+    </html>
+    """
+
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "lxml")
+    section = soup.find("section", {"class": "subsection"})
+
+    with patch.object(scraper, "_fetch_page", new_callable=AsyncMock) as mock_fetch:
+        # First track has YouTube, second doesn't
+        mock_fetch.side_effect = [track_page_with_youtube, track_page_without_youtube]
+
+        connections = await scraper._extract_connections_with_youtube(
+            section, include_youtube=True
+        )
+
+        assert len(connections) == 2
+        assert connections[0]["track"] == "Sample Track 1"
+        assert connections[0]["artist"] == "Artist 1"
+        assert connections[0]["youtube_url"] == "https://youtu.be/abc123"
+        assert connections[1]["track"] == "Sample Track 2"
+        assert connections[1]["artist"] == "Artist 2"
+        assert "youtube_url" not in connections[1]  # No YouTube link found
+
+    await scraper.aclose()
+
+
+@pytest.mark.asyncio
 async def test_get_youtube_links_from_search(scraper):
     """Test getting YouTube links from search results."""
     mock_search_html = """

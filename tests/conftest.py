@@ -9,6 +9,13 @@ import socket
 
 def check_internet_connection():
     """Check if internet connection is available."""
+    import os
+
+    # If proxy is configured, assume connection is available
+    # (DNS lookup won't work through proxy)
+    if os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy"):
+        return True
+
     try:
         # Try to resolve whosampled.com
         socket.gethostbyname("www.whosampled.com")

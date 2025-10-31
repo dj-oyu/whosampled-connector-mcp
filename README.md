@@ -340,16 +340,17 @@ pip install -e ".[dev]"
 
 This project has two types of tests:
 
-**Unit Tests (Fast, Mocked)** - 20 tests:
+**Unit Tests (Fast, Mocked)** - 33 tests:
 - Test server and scraper logic with mocked data
 - Do not access real WhoSampled
 - Run in ~0.1 seconds
 
-**Integration Tests (Slow, Real)** - 8 tests:
+**Integration Tests (Slow, Real)** - 16 tests:
 - Access real WhoSampled website
 - Verify HTML structure and CSS selectors
 - Require Playwright browsers installed
 - Run in ~30-60 seconds
+- Includes performance tests comparing with/without YouTube links
 
 **Quick Test (Unit Tests Only - Recommended):**
 ```bash
@@ -359,7 +360,7 @@ uv run pytest -v -m "not integration"
 # With pip
 pytest -v -m "not integration"
 
-# Result: 20 passed in ~0.1s
+# Result: 33 passed in ~0.1s
 ```
 
 **Full Test Suite (Unit + Integration):**
@@ -370,12 +371,29 @@ uv run playwright install chromium
 # Run all tests
 uv run pytest -v
 
-# Result: 28 passed in ~30-60s
+# Result: 49 passed in ~30-60s
 ```
 
-**Integration Tests Only:**
+**Integration Tests Only (includes all performance tests):**
 ```bash
+# All integration tests including Team Tomodachi performance tests
 uv run pytest -v -m "integration"
+
+# Result: 16 integration tests including:
+#  - Basic search and retrieval tests
+#  - YouTube link tests
+#  - Team Tomodachi specific tests with performance metrics
+```
+
+**Team Tomodachi Performance Tests:**
+```bash
+# Run only Team Tomodachi tests (performance + verification)
+uv run pytest -v -m "integration" -k "team_tomodachi"
+
+# These tests verify:
+#  - Expected YouTube video IDs (c1UaGJlsw5g, 0LEc7es4_rE, acw_iA5IgTQ, 5DmLGUCmxD0)
+#  - Performance comparison (with vs without YouTube links)
+#  - YouTube link coverage for all track sections
 ```
 
 **Specific Test Files:**
@@ -399,12 +417,14 @@ See [TESTING.md](TESTING.md) for more details.
 
 ### Test Structure
 
-- `tests/test_scraper.py` - Unit tests for scraper (8 tests, mocked)
-- `tests/test_server.py` - Unit tests for MCP server tools (12 tests, mocked)
-- `tests/test_e2e.py` - Integration tests (8 tests, real WhoSampled access)
+- `tests/test_scraper.py` - Unit tests for scraper (14 tests, mocked)
+- `tests/test_server.py` - Unit tests for MCP server tools (19 tests, mocked)
+- `tests/test_e2e.py` - Integration tests (16 tests, real WhoSampled access)
+  - Includes Team Tomodachi performance benchmarks
+  - Verifies YouTube link fetching for all related tracks
 - `tests/conftest.py` - Shared test fixtures and configuration
 
-**Total**: 28 tests (20 unit + 8 integration)
+**Total**: 49 tests (33 unit + 16 integration)
 
 ## License
 
