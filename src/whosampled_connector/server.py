@@ -3,7 +3,9 @@ WhoSampled MCP Server
 An MCP server for searching WhoSampled and discovering sampling sources, covers, and remixes.
 """
 
+import argparse
 import asyncio
+import sys
 from typing import Any
 from mcp.server import Server
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
@@ -323,6 +325,65 @@ async def main():
 
 def cli():
     """CLI entry point for uvx and pip installations."""
+    parser = argparse.ArgumentParser(
+        prog="whosampled-connector",
+        description=(
+            "WhoSampled MCP Server - Search WhoSampled and discover sampling sources, covers, and remixes\n"
+            "\n"
+            "WhoSampledで検索して結果を返すMCPサーバー\n"
+            "アーティスト名、曲名などの文字列を受け取ってWhoSampled?で検索を実行し、\n"
+            "その曲のサンプリングソースやカバー音源などを発見するためのMCPサーバーです。\n"
+        ),
+        epilog=(
+            "USAGE:\n"
+            "  This is an MCP (Model Context Protocol) server that communicates via stdin/stdout.\n"
+            "  It should be configured in your MCP client (e.g., Claude Desktop, Cursor).\n"
+            "\n"
+            "  使い方:\n"
+            "  これはstdin/stdoutで通信するMCP (Model Context Protocol) サーバーです。\n"
+            "  MCPクライアント（Claude Desktop、Cursorなど）で設定して使用してください。\n"
+            "\n"
+            "AVAILABLE TOOLS:\n"
+            "  search_track              - Find a track on WhoSampled by query\n"
+            "                              クエリでWhoSampledから曲を検索\n"
+            "\n"
+            "  get_track_samples         - Discover what a song sampled, who sampled it,\n"
+            "                              covers, and remixes\n"
+            "                              サンプリング元、カバー、リミックス情報を取得\n"
+            "\n"
+            "  get_track_details_by_url  - Get details from a WhoSampled URL directly\n"
+            "                              WhoSampled URLから直接詳細を取得\n"
+            "\n"
+            "  get_youtube_links         - Get YouTube links from search results\n"
+            "                              検索結果からYouTubeリンクを取得\n"
+            "\n"
+            "EXAMPLES:\n"
+            "  # Run the server (it will listen on stdin/stdout)\n"
+            "  whosampled-connector\n"
+            "\n"
+            "  # Display this help message\n"
+            "  whosampled-connector --help\n"
+            "\n"
+            "  # Configuration in Claude Desktop (claude_desktop_config.json):\n"
+            "  {\n"
+            '    "mcpServers": {\n'
+            '      "whosampled": {\n'
+            '        "command": "uvx",\n'
+            '        "args": ["--from", "git+https://github.com/dj-oyu/whosampled-connector-mcp",\n'
+            '                 "whosampled-connector"]\n'
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "\n"
+            "DOCUMENTATION:\n"
+            "  https://github.com/dj-oyu/whosampled-connector-mcp\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    args = parser.parse_args()
+
+    # Start the MCP server
     asyncio.run(main())
 
 

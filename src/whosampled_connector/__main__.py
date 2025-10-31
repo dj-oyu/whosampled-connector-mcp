@@ -2,8 +2,7 @@
 Entry point for running the WhoSampled MCP server.
 """
 
-import asyncio
-from .server import main
+from .server import cli
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    cli()
