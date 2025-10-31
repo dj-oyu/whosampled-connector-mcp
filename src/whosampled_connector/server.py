@@ -25,24 +25,24 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="search_track",
-            description="Search for a track on WhoSampled by artist and track name. Returns basic track information and URL.",
+            description="Find a track on WhoSampled. Returns title, artist, and URL. Use romaji for Japanese names (e.g., 'chiba yuki' not '千葉雄輝').",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name"},
-                    "track": {"type": "string", "description": "Track/song name"},
+                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
+                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
                 },
                 "required": ["artist", "track"],
             },
         ),
         Tool(
             name="get_track_samples",
-            description="Get detailed information about a track including samples it used, tracks that sampled it, covers, and remixes. Optionally includes YouTube links.",
+            description="Discover what a song sampled, who sampled it, covers, and remixes. Use for: 'what did X sample?', 'find covers of X', 'who sampled X?'. Use romaji for Japanese names.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name"},
-                    "track": {"type": "string", "description": "Track/song name"},
+                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
+                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
                     "include_youtube": {
                         "type": "boolean",
                         "description": "Whether to include YouTube links in the response",
@@ -54,7 +54,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="get_track_details_by_url",
-            description="Get detailed information about a track using its WhoSampled URL. Returns samples, covers, remixes, and optionally YouTube links.",
+            description="Get samples, covers, and remixes from a WhoSampled URL directly. Use when you already have the track's URL.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -70,12 +70,12 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="get_youtube_links",
-            description="Get YouTube links from search results with priority: Top Hit > Connections > Tracks. Returns up to 3 tracks per section.",
+            description="Get YouTube links from WhoSampled search results. Returns URLs for top matching tracks. Use romaji for Japanese names.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name"},
-                    "track": {"type": "string", "description": "Track/song name"},
+                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
+                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
                     "max_per_section": {
                         "type": "integer",
                         "description": "Maximum number of tracks to get from each section (default: 3)",
