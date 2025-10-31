@@ -122,18 +122,16 @@ class WhoSampledScraper:
             await page.close()
             await context.close()
 
-    async def search_track(self, artist: str, track: str) -> Optional[Dict]:
+    async def search_track(self, query: str) -> Optional[Dict]:
         """
         Search for a track on WhoSampled.
 
         Args:
-            artist: Artist name
-            track: Track name
+            query: Search query (artist name, track name, or both)
 
         Returns:
             Dictionary with track information and URL, or None if not found
         """
-        query = f"{artist} {track}"
         params = urllib.parse.urlencode({"q": query})
         search_url = f"{self.SEARCH_URL}?{params}"
 
@@ -152,15 +150,8 @@ class WhoSampledScraper:
             track_url = self.BASE_URL + track_result.get("href", "")
             track_title = track_result.get_text(strip=True)
 
-            # Extract artist name - look for the next sibling link or parent's next link
-            artist_name = artist
-            parent = track_result.parent
-            if parent:
-                # Find all links in the parent container
-                links = parent.find_all("a")
-                # The artist is usually the second link
-                if len(links) > 1:
-                    artist_name = links[1].get_text(strip=True)
+            # Extract artist name from the result
+            artist_name = self._extract_artist_name(track_result)
 
             return {"title": track_title, "artist": artist_name, "url": track_url}
 
@@ -169,20 +160,18 @@ class WhoSampledScraper:
             return None
 
     async def get_youtube_links_from_search(
-        self, artist: str, track: str, max_per_section: int = 3
+        self, query: str, max_per_section: int = 3
     ) -> Dict:
         """
         Get YouTube links from search results with priority: Top Hit > Connections > Tracks.
 
         Args:
-            artist: Artist name
-            track: Track name
+            query: Search query (artist name, track name, or both)
             max_per_section: Maximum number of tracks to get from each section (default: 3)
 
         Returns:
             Dictionary with YouTube links organized by section priority
         """
-        query = f"{artist} {track}"
         params = urllib.parse.urlencode({"q": query})
         search_url = f"{self.SEARCH_URL}?{params}"
 

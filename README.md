@@ -212,13 +212,19 @@ python example_usage.py
 ### Available Tools
 
 #### 1. search_track
-アーティスト名と曲名でWhoSampledを検索し、基本情報とURLを返します。
+検索クエリ（アーティスト名、曲名、または両方）でWhoSampledを検索し、基本情報とURLを返します。
 
 **Input:**
 ```json
 {
-  "artist": "Daft Punk",
-  "track": "Harder Better Faster Stronger"
+  "query": "Daft Punk Harder Better Faster Stronger"
+}
+```
+
+または曲名のみ:
+```json
+{
+  "query": "team tomodachi"
 }
 ```
 
@@ -234,13 +240,12 @@ Use get_track_samples or get_track_details_by_url to get detailed information ab
 ```
 
 #### 2. get_track_samples
-アーティスト名と曲名で検索し、サンプリング、カバー、リミックスの詳細情報を取得します。
+検索クエリ（アーティスト名、曲名、または両方）で検索し、サンプリング、カバー、リミックスの詳細情報を取得します。
 
 **Input:**
 ```json
 {
-  "artist": "Kanye West",
-  "track": "Stronger",
+  "query": "Kanye West Stronger",
   "include_youtube": true
 }
 ```

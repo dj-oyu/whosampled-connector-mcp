@@ -17,7 +17,7 @@ async def simulate_client():
     print("-" * 40)
     print("Input: search_track")
     print(
-        'Arguments: {"artist": "Daft Punk", "track": "Harder Better Faster Stronger"}'
+        'Arguments: {"query": "Daft Punk Harder Better Faster Stronger"}'
     )
     print()
 
@@ -26,8 +26,7 @@ async def simulate_client():
     print("-" * 40)
     print("Input: get_track_samples")
     print("Arguments: {")
-    print('  "artist": "Kanye West",')
-    print('  "track": "Stronger",')
+    print('  "query": "Kanye West Stronger",')
     print('  "include_youtube": true')
     print("}")
     print()

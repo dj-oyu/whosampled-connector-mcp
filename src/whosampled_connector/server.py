@@ -25,31 +25,29 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="search_track",
-            description="Find a track on WhoSampled. Returns title, artist, and URL. Use romaji for Japanese names (e.g., 'chiba yuki' not '千葉雄輝').",
+            description="Find a track on WhoSampled. Use for queries like 'team tomodachi' (track only), 'chiba yuki' (artist only), or 'chiba yuki team tomodachi' (both). Use romaji for Japanese.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
-                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
+                    "query": {"type": "string", "description": "Search query: artist name, track name, or both (use romaji for Japanese)"},
                 },
-                "required": ["artist", "track"],
+                "required": ["query"],
             },
         ),
         Tool(
             name="get_track_samples",
-            description="Discover what a song sampled, who sampled it, covers, and remixes. Use for: 'what did X sample?', 'find covers of X', 'who sampled X?'. Use romaji for Japanese names.",
+            description="Discover what a song sampled, who sampled it, covers, and remixes. Use for: 'what did X sample?', 'find covers of X', 'who sampled X?'. Use romaji for Japanese.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
-                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
+                    "query": {"type": "string", "description": "Search query: artist name, track name, or both (use romaji for Japanese)"},
                     "include_youtube": {
                         "type": "boolean",
                         "description": "Whether to include YouTube links in the response",
                         "default": False,
                     },
                 },
-                "required": ["artist", "track"],
+                "required": ["query"],
             },
         ),
         Tool(
@@ -70,12 +68,11 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="get_youtube_links",
-            description="Get YouTube links from WhoSampled search results. Returns URLs for top matching tracks. Use romaji for Japanese names.",
+            description="Get YouTube links from WhoSampled search results. Returns URLs for top matching tracks. Use romaji for Japanese.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "artist": {"type": "string", "description": "Artist name (use romaji for Japanese)"},
-                    "track": {"type": "string", "description": "Track/song name (use romaji for Japanese)"},
+                    "query": {"type": "string", "description": "Search query: artist name, track name, or both (use romaji for Japanese)"},
                     "max_per_section": {
                         "type": "integer",
                         "description": "Maximum number of tracks to get from each section (default: 3)",
@@ -84,7 +81,7 @@ async def list_tools() -> list[Tool]:
                         "maximum": 10,
                     },
                 },
-                "required": ["artist", "track"],
+                "required": ["query"],
             },
         ),
     ]
@@ -95,18 +92,16 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """Handle tool calls."""
 
     if name == "search_track":
-        artist = arguments.get("artist", "")
-        track = arguments.get("track", "")
+        query = arguments.get("query", "")
 
-        if not artist:
-            return [TextContent(type="text", text="Error: Artist name is required")]
+        if not query:
+            return [TextContent(type="text", text="Error: Query is required")]
 
-        result = await scraper.search_track(artist, track)
+        result = await scraper.search_track(query)
 
         if result is None:
-            search_query = f"'{track}' by '{artist}'" if track else f"artist '{artist}'"
             return [
-                TextContent(type="text", text=f"No results found for {search_query}")
+                TextContent(type="text", text=f"No results found for '{query}'")
             ]
 
         response = f"""Track found on WhoSampled:
@@ -121,24 +116,23 @@ Use get_track_samples or get_track_details_by_url to get detailed information ab
         return [TextContent(type="text", text=response)]
 
     elif name == "get_track_samples":
-        artist = arguments.get("artist", "")
-        track = arguments.get("track", "")
+        query = arguments.get("query", "")
         include_youtube = arguments.get("include_youtube", False)
 
-        if not artist or not track:
+        if not query:
             return [
                 TextContent(
-                    type="text", text="Error: Both artist and track name are required"
+                    type="text", text="Error: Query is required"
                 )
             ]
 
         # First search for the track
-        search_result = await scraper.search_track(artist, track)
+        search_result = await scraper.search_track(query)
 
         if search_result is None:
             return [
                 TextContent(
-                    type="text", text=f"No results found for '{track}' by '{artist}'"
+                    type="text", text=f"No results found for '{query}'"
                 )
             ]
 
@@ -159,19 +153,18 @@ Use get_track_samples or get_track_details_by_url to get detailed information ab
         return [TextContent(type="text", text=_format_track_details(details))]
 
     elif name == "get_youtube_links":
-        artist = arguments.get("artist", "")
-        track = arguments.get("track", "")
+        query = arguments.get("query", "")
         max_per_section = arguments.get("max_per_section", 3)
 
-        if not artist or not track:
+        if not query:
             return [
                 TextContent(
-                    type="text", text="Error: Both artist and track name are required"
+                    type="text", text="Error: Query is required"
                 )
             ]
 
         result = await scraper.get_youtube_links_from_search(
-            artist, track, max_per_section
+            query, max_per_section
         )
 
         return [TextContent(type="text", text=_format_youtube_links(result))]
