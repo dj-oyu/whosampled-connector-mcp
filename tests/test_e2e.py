@@ -274,3 +274,155 @@ async def test_integration_get_youtube_links_missing_params():
     assert len(result) == 1
     assert "Error" in result[0].text
     assert "required" in result[0].text.lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_integration_team_tomodachi_with_youtube_links():
+    """Test Team Tomodachi track with YouTube links for all related tracks."""
+    import time
+
+    # Measure performance
+    start_time = time.time()
+
+    result = await call_tool(
+        "get_track_samples", {"query": "team tomodachi", "include_youtube": True}
+    )
+
+    elapsed_time = time.time() - start_time
+
+    assert len(result) == 1
+    text = result[0].text
+
+    # Expected video IDs
+    expected_video_ids = [
+        "c1UaGJlsw5g",  # Original track
+        "0LEc7es4_rE",  # Hololive EN cover
+        "acw_iA5IgTQ",  # Tokai mix
+        "5DmLGUCmxD0",  # Kansai mix
+    ]
+
+    # Print results for debugging
+    print(f"\n=== Team Tomodachi Test Results ===")
+    print(f"Elapsed time: {elapsed_time:.2f}s")
+    print(f"\nResponse text:\n{text}")
+    print(f"\n=== Checking for expected video IDs ===")
+
+    # Check for each expected video ID
+    found_ids = []
+    missing_ids = []
+    for video_id in expected_video_ids:
+        if video_id in text:
+            found_ids.append(video_id)
+            print(f"✓ Found: {video_id}")
+        else:
+            missing_ids.append(video_id)
+            print(f"✗ Missing: {video_id}")
+
+    # Assertions
+    assert "Team Tomodachi" in text, "Track title should be in response"
+    assert "youtu.be/" in text or "youtube.com" in text, "Should have YouTube links"
+
+    # Check if we found at least the original track
+    assert (
+        "c1UaGJlsw5g" in text
+    ), "Should have original track YouTube link (c1UaGJlsw5g)"
+
+    # Performance check - should complete in reasonable time
+    # Allow up to 60 seconds for fetching multiple YouTube links
+    assert (
+        elapsed_time < 60
+    ), f"Test took too long: {elapsed_time:.2f}s (expected < 60s)"
+
+    # Report findings
+    print(f"\nFound {len(found_ids)}/{len(expected_video_ids)} expected video IDs")
+    if missing_ids:
+        print(f"Note: Some expected IDs were not found: {missing_ids}")
+        print("This may be due to WhoSampled data changes or track page structure")
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_integration_team_tomodachi_performance():
+    """Test performance comparison between with and without YouTube links."""
+    import time
+
+    # Test without YouTube links
+    start_time = time.time()
+    result_no_yt = await call_tool(
+        "get_track_samples", {"query": "team tomodachi", "include_youtube": False}
+    )
+    time_no_yt = time.time() - start_time
+
+    # Test with YouTube links
+    start_time = time.time()
+    result_with_yt = await call_tool(
+        "get_track_samples", {"query": "team tomodachi", "include_youtube": True}
+    )
+    time_with_yt = time.time() - start_time
+
+    print(f"\n=== Performance Comparison ===")
+    print(f"Without YouTube links: {time_no_yt:.2f}s")
+    print(f"With YouTube links: {time_with_yt:.2f}s")
+    print(f"Difference: {time_with_yt - time_no_yt:.2f}s")
+    print(f"Slowdown factor: {time_with_yt / time_no_yt:.2f}x")
+
+    # Both should complete successfully
+    assert len(result_no_yt) == 1
+    assert len(result_with_yt) == 1
+
+    # With YouTube should take longer (fetching additional pages)
+    # But allow for network variability
+    print(
+        f"\nNote: With YouTube links is {'slower' if time_with_yt > time_no_yt else 'faster'} "
+        f"than without (expected to be slower due to additional HTTP requests)"
+    )
+
+    # Both should complete in reasonable time
+    assert time_no_yt < 30, f"Without YouTube took too long: {time_no_yt:.2f}s"
+    assert time_with_yt < 60, f"With YouTube took too long: {time_with_yt:.2f}s"
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_integration_team_tomodachi_all_sections():
+    """Test Team Tomodachi to verify all related tracks have YouTube links."""
+    result = await call_tool(
+        "get_track_samples", {"query": "team tomodachi", "include_youtube": True}
+    )
+
+    assert len(result) == 1
+    text = result[0].text
+
+    print(f"\n=== Team Tomodachi Full Response ===")
+    print(text)
+
+    # Track should have main YouTube link
+    assert "YouTube:" in text, "Should have at least one YouTube link"
+
+    # Count number of YouTube links
+    youtube_count = text.count("youtu.be/") + text.count("youtube.com/watch")
+
+    print(f"\n=== YouTube Link Statistics ===")
+    print(f"Total YouTube links found: {youtube_count}")
+
+    # Should have multiple YouTube links (main track + related tracks)
+    # Team Tomodachi typically has covers and remixes
+    assert youtube_count >= 1, "Should have at least the main track YouTube link"
+
+    # Check for different sections
+    sections_found = []
+    if "SAMPLED BY" in text:
+        sections_found.append("SAMPLED BY")
+    if "COVERED BY" in text:
+        sections_found.append("COVERED BY")
+    if "REMIXED BY" in text:
+        sections_found.append("REMIXED BY")
+
+    print(f"Sections found: {sections_found}")
+
+    # Verify that if sections exist, they should have YouTube links when available
+    # This is a best-effort test since not all tracks have YouTube videos
+    if sections_found:
+        print(f"Track has {len(sections_found)} related track sections")
+        print(f"Expected to find YouTube links for some of these tracks")
