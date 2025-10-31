@@ -385,17 +385,29 @@ class WhoSampledScraper:
                 if "contains sample" in header_text or (
                     "sampled" in header_text and "sampled in" not in header_text
                 ):
-                    result["samples"] = self._extract_connections(subsection)
+                    result["samples"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
                 elif "sampled in" in header_text:
-                    result["sampled_by"] = self._extract_connections(subsection)
+                    result["sampled_by"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
                 elif "cover of" in header_text:
-                    result["covers"] = self._extract_connections(subsection)
+                    result["covers"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
                 elif "covered in" in header_text or "covered by" in header_text:
-                    result["covered_by"] = self._extract_connections(subsection)
+                    result["covered_by"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
                 elif "remix of" in header_text:
-                    result["remixes"] = self._extract_connections(subsection)
+                    result["remixes"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
                 elif "remixed in" in header_text or "remixed by" in header_text:
-                    result["remixed_by"] = self._extract_connections(subsection)
+                    result["remixed_by"] = await self._extract_connections_with_youtube(
+                        subsection, include_youtube
+                    )
 
             return result
 
@@ -452,6 +464,57 @@ class WhoSampledScraper:
             artist_name = self._extract_artist_name(track_link)
 
             connection = {"track": track_name, "artist": artist_name, "url": track_url}
+            connections.append(connection)
+
+        return connections
+
+    async def _extract_connections_with_youtube(
+        self, section, include_youtube: bool = False
+    ) -> List[Dict]:
+        """
+        Extract track connections with optional YouTube links from a section.
+
+        Args:
+            section: BeautifulSoup section element
+            include_youtube: Whether to fetch YouTube links for each track
+
+        Returns:
+            List of dictionaries with track information and YouTube links
+        """
+        connections = []
+
+        # Find all track links (a.trackName elements)
+        track_links = section.select("a.trackName")
+
+        for track_link in track_links:
+            track_name = track_link.get_text(strip=True)
+            track_href = track_link.get("href", "")
+            track_url = self.BASE_URL + track_href if track_href else ""
+            artist_name = self._extract_artist_name(track_link)
+
+            connection = {
+                "track": track_name,
+                "artist": artist_name,
+                "url": track_url,
+            }
+
+            # Fetch YouTube link if requested
+            if include_youtube and track_url:
+                try:
+                    html = await self._fetch_page(track_url)
+                    soup = BeautifulSoup(html, "lxml")
+
+                    # WhoSampled uses data-id attribute for YouTube video IDs
+                    youtube_embed = soup.select_one(
+                        "div.embed-placeholder[data-id], div.youtube-placeholder[data-id]"
+                    )
+                    if youtube_embed:
+                        video_id = youtube_embed.get("data-id", "")
+                        if video_id:
+                            connection["youtube_url"] = f"https://youtu.be/{video_id}"
+                except Exception as e:
+                    print(f"Error fetching YouTube link for {track_url}: {e}")
+
             connections.append(connection)
 
         return connections

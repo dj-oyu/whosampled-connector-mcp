@@ -259,6 +259,8 @@ def _format_track_details(details: dict) -> str:
         for sample in details["samples"]:
             lines.append(f"  • {sample['track']} by {sample['artist']}")
             lines.append(f"    {sample['url']}")
+            if sample.get("youtube_url"):
+                lines.append(f"    YouTube: {sample['youtube_url']}")
         lines.append("")
 
     # Sampled by (tracks that sampled this song)
@@ -267,6 +269,8 @@ def _format_track_details(details: dict) -> str:
         for track in details["sampled_by"]:
             lines.append(f"  • {track['track']} by {track['artist']}")
             lines.append(f"    {track['url']}")
+            if track.get("youtube_url"):
+                lines.append(f"    YouTube: {track['youtube_url']}")
         lines.append("")
 
     # Covers
@@ -275,6 +279,8 @@ def _format_track_details(details: dict) -> str:
         for cover in details["covers"]:
             lines.append(f"  • {cover['track']} by {cover['artist']}")
             lines.append(f"    {cover['url']}")
+            if cover.get("youtube_url"):
+                lines.append(f"    YouTube: {cover['youtube_url']}")
         lines.append("")
 
     # Covered by
@@ -283,6 +289,8 @@ def _format_track_details(details: dict) -> str:
         for cover in details["covered_by"]:
             lines.append(f"  • {cover['track']} by {cover['artist']}")
             lines.append(f"    {cover['url']}")
+            if cover.get("youtube_url"):
+                lines.append(f"    YouTube: {cover['youtube_url']}")
         lines.append("")
 
     # Remixes
@@ -291,6 +299,8 @@ def _format_track_details(details: dict) -> str:
         for remix in details["remixes"]:
             lines.append(f"  • {remix['track']} by {remix['artist']}")
             lines.append(f"    {remix['url']}")
+            if remix.get("youtube_url"):
+                lines.append(f"    YouTube: {remix['youtube_url']}")
         lines.append("")
 
     # Remixed by
@@ -299,6 +309,8 @@ def _format_track_details(details: dict) -> str:
         for remix in details["remixed_by"]:
             lines.append(f"  • {remix['track']} by {remix['artist']}")
             lines.append(f"    {remix['url']}")
+            if remix.get("youtube_url"):
+                lines.append(f"    YouTube: {remix['youtube_url']}")
         lines.append("")
 
     # Check if we have any content beyond URL and title
