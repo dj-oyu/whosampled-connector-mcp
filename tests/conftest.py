@@ -80,7 +80,7 @@ def mock_search_html():
 
 @pytest.fixture
 def mock_track_details_html():
-    """Mock HTML response for track details page with new WhoSampled structure."""
+    """Mock HTML response for track details page with actual WhoSampled structure."""
     return """
     <html>
         <body>
@@ -90,48 +90,60 @@ def mock_track_details_html():
             <section class="subsection" id="samples">
                 <h3>Contains samples</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Cola-Bottle-Baby/">Cola Bottle Baby</a>
-                    <a href="/Edwin-Birdsong/">Edwin Birdsong</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Cola-Bottle-Baby/">Cola Bottle Baby</a>
+                        <span class="trackArtist">by <a href="/Edwin-Birdsong/">Edwin Birdsong</a></span>
+                    </span>
                 </div>
             </section>
 
             <section class="subsection" id="was-sampled">
                 <h3>Was sampled in</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Kanye-West/Stronger/">Stronger</a>
-                    <a href="/Kanye-West/">Kanye West</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Kanye-West/Stronger/">Stronger</a>
+                        <span class="trackArtist">by <a href="/Kanye-West/">Kanye West</a></span>
+                    </span>
                 </div>
             </section>
 
             <section class="subsection" id="covers">
                 <h3>Cover of</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Some-Cover/">Cover Version</a>
-                    <a href="/Cover-Artist/">Cover Artist</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Some-Cover/">Cover Version</a>
+                        <span class="trackArtist">by <a href="/Cover-Artist/">Cover Artist</a></span>
+                    </span>
                 </div>
             </section>
 
             <section class="subsection" id="was-covered">
                 <h3>Covered by</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Another-Cover/">Another Cover</a>
-                    <a href="/Another-Artist/">Another Artist</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Another-Cover/">Another Cover</a>
+                        <span class="trackArtist">by <a href="/Another-Artist/">Another Artist</a></span>
+                    </span>
                 </div>
             </section>
 
             <section class="subsection" id="remixes">
                 <h3>Remix of</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Some-Remix/">Remix Version</a>
-                    <a href="/Remix-Artist/">Remix Artist</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Some-Remix/">Remix Version</a>
+                        <span class="trackArtist">by <a href="/Remix-Artist/">Remix Artist</a></span>
+                    </span>
                 </div>
             </section>
 
             <section class="subsection" id="was-remixed">
                 <h3>Remixed by</h3>
                 <div class="trackItem">
-                    <a class="trackName" href="/Another-Remix/">Another Remix</a>
-                    <a href="/Remixer/">Remixer</a>
+                    <span class="trackDetails">
+                        <a class="trackName" href="/Another-Remix/">Another Remix</a>
+                        <span class="trackArtist">by <a href="/Remixer/">Remixer</a></span>
+                    </span>
                 </div>
             </section>
         </body>

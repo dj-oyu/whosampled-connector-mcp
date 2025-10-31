@@ -425,12 +425,31 @@ class WhoSampledScraper:
         Returns:
             Artist name or "Unknown" if not found
         """
-        # Try span.trackArtist first
+        # Strategy 1: Try span.trackArtist (most reliable for WhoSampled structure)
         artist_span = track_link.find_next_sibling("span", class_="trackArtist")
         if artist_span:
-            return artist_span.get_text(strip=True)
+            # Extract artist names from links within the span
+            # WhoSampled uses: <span class="trackArtist">by <a href="...">Artist</a>, <a href="...">Artist2</a> and <a href="...">Artist3</a></span>
+            artist_links = artist_span.find_all("a")
+            if artist_links:
+                # Get all artist names and join them
+                artist_names = [link.get_text(strip=True) for link in artist_links]
+                if artist_names:
+                    # Join multiple artists with comma
+                    return ", ".join(artist_names)
 
-        # Try next sibling links (skip track links)
+            # Fallback: get text from span (includes "by " prefix)
+            text = artist_span.get_text(strip=True)
+            # Remove "by " prefix if present
+            if text.startswith("by "):
+                text = text[3:].strip()
+            # Remove year suffix like " (2024)"
+            import re
+            text = re.sub(r'\s*\(\d{4}\)$', '', text)
+            if text:
+                return text
+
+        # Strategy 2: Try next sibling links (skip track links)
         for sibling in track_link.find_next_siblings():
             if sibling.name == "a":
                 classes = sibling.get("class", [])
@@ -439,6 +458,70 @@ class WhoSampledScraper:
             # Stop if we hit a non-link element (likely moved to next section)
             if sibling.name not in ["a", "span"]:
                 break
+
+        # Strategy 3: Fallback to URL extraction
+        # URLs like: /sample/ID/Artist-Name-Track-Name-Original-Artist-Original-Track/
+        # or: /cover/ID/Artist-Name-Track-Name/
+        track_url = track_link.get("href", "")
+        if track_url:
+            artist_name = self._extract_artist_from_url(track_url)
+            if artist_name != "Unknown":
+                return artist_name
+
+        return "Unknown"
+
+    def _extract_artist_from_url(self, url: str) -> str:
+        """
+        Extract artist name from WhoSampled URL as fallback.
+
+        Args:
+            url: WhoSampled URL path (e.g., /sample/123/Artist-Track-Original/)
+
+        Returns:
+            Artist name or "Unknown" if cannot extract
+        """
+        try:
+            # Split URL by '/'
+            parts = url.strip("/").split("/")
+
+            # For URLs like /sample/ID/Artist-Track-Original/ or /cover/ID/Artist-Track/
+            if len(parts) >= 3 and parts[0] in ["sample", "cover", "remix"]:
+                # Get the slug part (e.g., "Knxwledge-Tomodachi!-Yuki-Chiba-Team-Tomodachi")
+                slug = parts[2]
+
+                # WhoSampled URL pattern: FirstArtist-FirstTrack-SecondArtist-SecondTrack
+                # Sometimes uses -- for multi-word names: Hololive-English-Advent--Track-Name
+
+                # Strategy 1: Check for -- (double dash) which indicates multi-word artist
+                if "--" in slug:
+                    # Split by double dash first
+                    artist_part = slug.split("--")[0]
+                    artist_name = artist_part.replace("-", " ").strip()
+                    if artist_name:
+                        return artist_name
+
+                # Strategy 2: Try to find the artist by taking first word(s)
+                # Common patterns:
+                # - Single word artist: "Knxwledge-..."
+                # - Two word artist: "Yuki-Chiba-..."
+                # - Three word artist: "Hololive-English-Advent-..."
+
+                slug_parts = slug.split("-")
+                if len(slug_parts) >= 1:
+                    # Take first word as artist (safest guess)
+                    artist_name = slug_parts[0].strip()
+                    if artist_name:
+                        return artist_name
+
+            # For regular track URLs like /Artist-Name/Track-Name/
+            elif len(parts) >= 2:
+                # The first part is the artist name
+                artist_name = parts[0].replace("-", " ").strip()
+                if artist_name:
+                    return artist_name
+
+        except Exception as e:
+            print(f"Error extracting artist from URL {url}: {e}")
 
         return "Unknown"
 
