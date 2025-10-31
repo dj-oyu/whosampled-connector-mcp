@@ -14,7 +14,7 @@ async def test_integration_search_and_get_details():
     """Test complete flow: search track and get details using real WhoSampled."""
     # Step 1: Search for a well-known track
     search_result = await call_tool(
-        "search_track", {"artist": "Daft Punk", "track": "One More Time"}
+        "search_track", {"query": "Daft Punk One More Time"}
     )
 
     assert len(search_result) == 1
@@ -25,7 +25,7 @@ async def test_integration_search_and_get_details():
     # Step 2: Get detailed information
     details_result = await call_tool(
         "get_track_samples",
-        {"artist": "Daft Punk", "track": "One More Time", "include_youtube": False},
+        {"query": "Daft Punk One More Time", "include_youtube": False},
     )
 
     assert len(details_result) == 1
@@ -58,8 +58,7 @@ async def test_integration_track_with_multiple_sections():
     result = await call_tool(
         "get_track_samples",
         {
-            "artist": "Daft Punk",
-            "track": "Harder Better Faster Stronger",
+            "query": "Daft Punk Harder Better Faster Stronger",
             "include_youtube": False,
         },
     )
@@ -76,7 +75,7 @@ async def test_integration_track_not_found():
     """Test flow when track is not found."""
     result = await call_tool(
         "search_track",
-        {"artist": "NonexistentArtistXYZ123456", "track": "NonexistentTrackXYZ123456"},
+        {"query": "NonexistentArtistXYZ123456 NonexistentTrackXYZ123456"},
     )
 
     assert len(result) == 1
@@ -88,7 +87,7 @@ async def test_integration_track_not_found():
 async def test_integration_artist_search():
     """Test artist search using real data - searches by artist only."""
     # Search for a well-known artist
-    result = await call_tool("search_track", {"artist": "Daft Punk", "track": ""})
+    result = await call_tool("search_track", {"query": "Daft Punk"})
 
     assert len(result) == 1
     # Should either find a result or return "No results found" (not an error)
@@ -105,7 +104,7 @@ async def test_integration_with_youtube_links():
     """Test flow with YouTube link inclusion using real data."""
     result = await call_tool(
         "get_track_samples",
-        {"artist": "Daft Punk", "track": "One More Time", "include_youtube": True},
+        {"query": "Daft Punk One More Time", "include_youtube": True},
     )
 
     assert len(result) == 1
@@ -137,7 +136,7 @@ async def test_integration_multiple_searches_sequential():
     """Test multiple sequential searches using real data."""
     # Search for first track
     result1 = await call_tool(
-        "search_track", {"artist": "Daft Punk", "track": "One More Time"}
+        "search_track", {"query": "Daft Punk One More Time"}
     )
 
     assert len(result1) == 1
@@ -145,7 +144,7 @@ async def test_integration_multiple_searches_sequential():
 
     # Search for second track
     result2 = await call_tool(
-        "search_track", {"artist": "Daft Punk", "track": "Around the World"}
+        "search_track", {"query": "Daft Punk Around the World"}
     )
 
     assert len(result2) == 1
@@ -158,7 +157,7 @@ async def test_integration_get_youtube_links():
     """Test get_youtube_links endpoint with real WhoSampled data."""
     result = await call_tool(
         "get_youtube_links",
-        {"artist": "Daft Punk", "track": "One More Time", "max_per_section": 3},
+        {"query": "Daft Punk One More Time", "max_per_section": 3},
     )
 
     assert len(result) == 1
@@ -186,8 +185,7 @@ async def test_integration_get_youtube_links_with_custom_max():
     result = await call_tool(
         "get_youtube_links",
         {
-            "artist": "Daft Punk",
-            "track": "Harder Better Faster Stronger",
+            "query": "Daft Punk Harder Better Faster Stronger",
             "max_per_section": 2,
         },
     )
@@ -211,8 +209,7 @@ async def test_integration_get_youtube_links_no_results():
     result = await call_tool(
         "get_youtube_links",
         {
-            "artist": "NonexistentArtistXYZ999",
-            "track": "NonexistentTrackXYZ999",
+            "query": "NonexistentArtistXYZ999 NonexistentTrackXYZ999",
             "max_per_section": 3,
         },
     )
@@ -230,7 +227,7 @@ async def test_integration_get_youtube_links_priority_order():
     """Test that get_youtube_links returns results in priority order."""
     result = await call_tool(
         "get_youtube_links",
-        {"artist": "Kanye West", "track": "Stronger", "max_per_section": 2},
+        {"query": "Kanye West Stronger", "max_per_section": 2},
     )
 
     assert len(result) == 1
@@ -257,18 +254,9 @@ async def test_integration_get_youtube_links_priority_order():
 @pytest.mark.slow
 async def test_integration_get_youtube_links_missing_params():
     """Test get_youtube_links error handling for missing parameters."""
-    # Missing artist
+    # Missing query parameter (should fail)
     result = await call_tool(
-        "get_youtube_links", {"track": "One More Time", "max_per_section": 3}
-    )
-
-    assert len(result) == 1
-    assert "Error" in result[0].text
-    assert "required" in result[0].text.lower()
-
-    # Missing track
-    result = await call_tool(
-        "get_youtube_links", {"artist": "Daft Punk", "max_per_section": 3}
+        "get_youtube_links", {"max_per_section": 3}
     )
 
     assert len(result) == 1
