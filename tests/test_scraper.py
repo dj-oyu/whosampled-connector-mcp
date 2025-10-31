@@ -12,7 +12,7 @@ async def test_search_track_success(scraper, mock_search_html):
         mock_fetch.return_value = mock_search_html
 
         result = await scraper.search_track(
-            "Daft Punk", "Harder Better Faster Stronger"
+            "Daft Punk Harder Better Faster Stronger"
         )
 
         assert result is not None
@@ -29,7 +29,7 @@ async def test_search_track_not_found(scraper):
     with patch.object(scraper, "_fetch_page", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = empty_html
 
-        result = await scraper.search_track("NonexistentArtist", "NonexistentTrack")
+        result = await scraper.search_track("NonexistentArtist NonexistentTrack")
 
         assert result is None
 
@@ -201,7 +201,7 @@ async def test_get_youtube_links_from_search(scraper):
         mock_fetch.side_effect = [mock_search_html] + [mock_track_page_html] * 10
 
         result = await scraper.get_youtube_links_from_search(
-            "Daft Punk", "One More Time", max_per_section=2
+            "Daft Punk One More Time", max_per_section=2
         )
 
         assert result is not None
@@ -232,7 +232,7 @@ async def test_get_youtube_links_from_search_no_results(scraper):
         mock_fetch.return_value = empty_html
 
         result = await scraper.get_youtube_links_from_search(
-            "Unknown", "Track", max_per_section=3
+            "Unknown Track", max_per_section=3
         )
 
         assert result is not None
@@ -249,7 +249,7 @@ async def test_get_youtube_links_from_search_error(scraper):
         mock_fetch.side_effect = Exception("Network error")
 
         result = await scraper.get_youtube_links_from_search(
-            "Artist", "Track", max_per_section=3
+            "Artist Track", max_per_section=3
         )
 
         assert "error" in result

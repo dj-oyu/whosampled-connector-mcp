@@ -39,7 +39,7 @@ async def test_search_track_tool_success():
 
         result = await call_tool(
             "search_track",
-            {"artist": "Daft Punk", "track": "Harder Better Faster Stronger"},
+            {"query": "Daft Punk Harder Better Faster Stronger"},
         )
 
         assert len(result) == 1
@@ -58,7 +58,7 @@ async def test_search_track_tool_not_found():
         mock_search.return_value = None
 
         result = await call_tool(
-            "search_track", {"artist": "Unknown Artist", "track": "Unknown Track"}
+            "search_track", {"query": "Unknown Artist Unknown Track"}
         )
 
         assert len(result) == 1
@@ -68,33 +68,33 @@ async def test_search_track_tool_not_found():
 
 @pytest.mark.asyncio
 async def test_search_track_tool_missing_params():
-    """Test search_track tool with missing artist parameter."""
-    result = await call_tool("search_track", {"track": "One More Time"})
+    """Test search_track tool with missing query parameter."""
+    result = await call_tool("search_track", {})
 
     assert len(result) == 1
     assert result[0].type == "text"
     assert "Error" in result[0].text
-    assert "Artist name is required" in result[0].text
+    assert "Query is required" in result[0].text
 
 
 @pytest.mark.asyncio
-async def test_search_track_tool_artist_only():
-    """Test search_track tool with artist only (no track name)."""
+async def test_search_track_tool_track_only():
+    """Test search_track tool with track name only (no artist)."""
     mock_result = {
-        "title": "Some Track",
+        "title": "One More Time",
         "artist": "Daft Punk",
-        "url": "https://www.whosampled.com/Daft-Punk/Some-Track/",
+        "url": "https://www.whosampled.com/Daft-Punk/One-More-Time/",
     }
 
     with patch.object(scraper, "search_track", new_callable=AsyncMock) as mock_search:
         mock_search.return_value = mock_result
 
-        result = await call_tool("search_track", {"artist": "Daft Punk", "track": ""})
+        result = await call_tool("search_track", {"query": "One More Time"})
 
         assert len(result) == 1
         assert result[0].type == "text"
         assert "Daft Punk" in result[0].text
-        assert "Some Track" in result[0].text
+        assert "One More Time" in result[0].text
 
 
 @pytest.mark.asyncio
@@ -144,8 +144,7 @@ async def test_get_track_samples_tool_success():
         result = await call_tool(
             "get_track_samples",
             {
-                "artist": "Daft Punk",
-                "track": "Harder Better Faster Stronger",
+                "query": "Daft Punk Harder Better Faster Stronger",
                 "include_youtube": False,
             },
         )
@@ -193,8 +192,7 @@ async def test_get_track_samples_with_youtube():
         result = await call_tool(
             "get_track_samples",
             {
-                "artist": "Daft Punk",
-                "track": "Harder Better Faster Stronger",
+                "query": "Daft Punk Harder Better Faster Stronger",
                 "include_youtube": True,
             },
         )
@@ -355,7 +353,7 @@ async def test_get_youtube_links_tool_success():
 
         result = await call_tool(
             "get_youtube_links",
-            {"artist": "Daft Punk", "track": "One More Time", "max_per_section": 3},
+            {"query": "Daft Punk One More Time", "max_per_section": 3},
         )
 
         assert len(result) == 1
@@ -373,16 +371,8 @@ async def test_get_youtube_links_tool_success():
 @pytest.mark.asyncio
 async def test_get_youtube_links_tool_missing_params():
     """Test get_youtube_links tool with missing parameters."""
-    # Missing track
-    result = await call_tool("get_youtube_links", {"artist": "Daft Punk"})
-
-    assert len(result) == 1
-    assert result[0].type == "text"
-    assert "Error" in result[0].text
-    assert "required" in result[0].text
-
-    # Missing artist
-    result = await call_tool("get_youtube_links", {"track": "One More Time"})
+    # Missing query
+    result = await call_tool("get_youtube_links", {})
 
     assert len(result) == 1
     assert result[0].type == "text"
@@ -408,11 +398,11 @@ async def test_get_youtube_links_tool_with_custom_max():
 
         result = await call_tool(
             "get_youtube_links",
-            {"artist": "Artist", "track": "Track", "max_per_section": 5},
+            {"query": "Artist Track", "max_per_section": 5},
         )
 
         # Verify the method was called with correct max_per_section
-        mock_get.assert_called_once_with("Artist", "Track", 5)
+        mock_get.assert_called_once_with("Artist Track", 5)
         assert len(result) == 1
 
 
